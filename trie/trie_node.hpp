@@ -1,42 +1,40 @@
-#include <climits>
+#ifndef TRIECTIONARY_TRIE_NODE_H_
+#define TRIECTIONARY_TRIE_NODE_H_
 
-/*------------------------------------------------------------------------------------------------*/
+#include "def.hpp"
 
-/* need to define the full alphabet size it like this, to perform compile-time check */
-#define TOTAL_ALPHABET_SIZE 128
-
-/* make sure at compilation that:
-	the machine contains 8 bits for 1 byte
-	that the total alphabet size (real alphabet size + padding) is a multile of 8 */
-static_assert(CHAR_BIT == 8, "Number of bits in a byte must be 8");
-static_assert(TOTAL_ALPHABET_SIZE%8 == 0, "Alphabet size must be multiple of 8");
-
-/*------------------------------------------------------------------------------------------------*/
+namespace triectionary
+{
 
 typedef class TrieNode
 {
 public:
-	/* stable size of (TOTAL_ALPHABET_SIZE/CHAR_BIT)*sizeof(unsigned char) bytes
-	 unsigned char always 1 byte,
-	 compilation fails if CPU doesn't have 8 bits in a byte,
-	 compilation fails if TOTAL_ALPHABET_SIZE isn't multiple of 8 */
-	unsigned char active_letters[TOTAL_ALPHABET_SIZE/CHAR_BIT];
+	/* stable size of (TOTAL_ALPHABET_SIZE/32)*sizeof(uint32_t) bytes
+	 uint8_t always 1 byte,
+	 compilation fails if TOTAL_ALPHABET_SIZE isn't multiple of 32 */
+	uint32_t active_letters[TOTAL_ALPHABET_SIZE/32];
 
 	/* variable size (0 to TOTAL_ALPHABET_SIZE*sizeof(pointer)) bytes
 	 pointer usually 8 bytes */
 	class TrieNode **children;
 
-	/* variable size, (0 to translation_size*sizeof(char)+sizeof(char)) bytes
-	 char always 1 byte */
-	char *translation;
+	/* variable size, 0 to translation_size*sizeof(character_size)+sizeof(character_size) bytes
+	 uint8_t always 1 byte
+	 uint16_t always 2 bytes
+	 char32_t always 4 bytes */
+	character_t *translation;
 
 	TrieNode();
 	~TrieNode();
 
 	int get_actives_count();
-	TrieNode* get_node_if_possible( char );
-	TrieNode* insert_letter( char );
-	void set_child_null( char );
+
+	TrieNode* get_node_if_possible( character_t );
+	TrieNode* insert_letter( character_t );
+	void set_child_null( character_t );
+
 }TrieNode;
 
-/*------------------------------------------------------------------------------------------------*/
+}
+
+#endif

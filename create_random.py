@@ -25,11 +25,11 @@ filesize = int(sys.argv[1])
 word = ""
 translation = ""
 
-f = open('./random_input.tsv', 'w')
+f = open('./random_input.csv', 'w')
 
 for i in range(1,filesize+1):
 	word = string_generator(5,15)
 	translation = string_generator(90,110)
-	f.write(word + " " + translation + "\n")
+	f.write(word + "," + translation + "\n")
 
 f.close()

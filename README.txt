@@ -2,6 +2,8 @@ A Trie Data Structure to manage in-memory words in the format of (word -> transl
 
 Future plans:
 1) cmake compilation
-2) Unicode characters
-3) Use a similar data-structure for the translation strings
-4) python bindings
+2) exceptions
+3) custom characters size (diff. than 1/2/4 bytes)
+4) Use a similar data-structure for the translation strings
+5) More effective load-save operations on disk
+6) python bindings

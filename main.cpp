@@ -2,7 +2,11 @@
 #include <vector>
 #include <algorithm>
 #include <dirent.h>
+#include <locale.h>
 
+#include "trie/def.hpp"
+#include "trie/extended_character_functions.hpp"
+#include "trie/trie_node.hpp"
 #include "trie/trie.hpp"
 
 void pick_dictionary( std::string&);
@@ -10,14 +14,17 @@ bool parse_input( std::string&, std::string&, std::string&);
 
 int main(int argc, char* argv[])
 {
+	setlocale(LC_ALL, "");
+
 	std::string dictionary_name;
 	pick_dictionary( dictionary_name );
 
 	printf("\nBringing data in memory...\n");
-	Trie* t = new Trie( dictionary_name.c_str() );
+	triectionary::Trie* t = new triectionary::Trie( dictionary_name.c_str() );
 	printf("Trie set up successfully :)\n\n");
 
 	std::string input, input1, input2;
+	character_t *arg1, *arg2;
 	bool correct_input;
 	do
 	{
@@ -30,9 +37,11 @@ int main(int argc, char* argv[])
 		printf("\\e 1        ||| exit and save changes\n");
 		printf("\\e 0        ||| exit without saving changes\n");
 
-		input = "";
-		input1 = "";
-		input2 = "";
+		input.clear();
+		input1.clear();
+		input2.clear();
+		arg1 = NULL;
+		arg2 = NULL;
 		std::getline(std::cin, input);
 
 		correct_input = parse_input( input, input1, input2);
@@ -43,32 +52,57 @@ int main(int argc, char* argv[])
 			{
 				printf("inserting: (word -> %s) and (translation -> %s)\n", input1.c_str(), input2.c_str() );
 
-				if ( t->add_word(input1.c_str(),input2.c_str()).compare("") != 0 )
-					printf("Added word %s with translation %s successfully in Trie\n\n", input1.c_str(), input2.c_str());
+				arg1 = triectionary::str_to_c( input1 );
+				arg2 = triectionary::str_to_c( input2 );
+
+				if ( t->add_word( arg1, arg2 ) != NULL )
+					printf("Added word %s with translation %s successfully in Trie\n\n", input1.c_str(), input2.c_str() );
 				else
 					printf("Translation already exists for this word\n\n");
+
+				delete[] arg1;
+				delete[] arg2;
 			}
 			else if (!input.compare("\\s"))
 			{
-				printf("searching: (word -> %s)\n", input1.c_str());
+				printf("Searching word: (word -> %s)\n", input1.c_str());
 
-				input2 = t->search_word(input1.c_str());
+				arg1 = triectionary::str_to_c( input1 );
 
-				if ( input2.compare("") != 0 )
-					printf("%s -> %s\n\n", input1.c_str(), input2.c_str());
+				arg2 = t->search_word( arg1 );
+
+				if ( arg2 != NULL )
+				{
+					printf("%s -> ", input1.c_str());
+					for (uint32_t i = 0; arg2[i] != '\0'; i++)
+						printf("%lc", arg2[i]);
+					printf("\n\n");
+				}
 				else
 					printf("%s doesn't exist in this dictionary\n\n", input1.c_str());
+
+				delete[] arg1;
 			}
 			else if (!input.compare("\\d"))
 			{
 				printf("deleting: (word -> %s)\n", input1.c_str());
 
-				input2 = t->delete_word(input1.c_str());
+				arg1 = triectionary::str_to_c( input1 );
 
-				if ( input2.compare("") != 0 )
-					printf("Deleted word %s with translation %s successfully from Trie\n\n", input1.c_str(), input2.c_str());
+				arg2 = t->delete_word( arg1);
+
+				if ( arg2 != NULL )
+				{
+					printf("Deleted word %s with translation ", input1.c_str());
+					for (uint32_t i = 0; arg2[i] != '\0'; i++)
+						printf("%lc", arg2[i]);
+					printf(" successfully from Trie\n\n");
+				}
 				else
 					printf("%s doesn't exist in this dictionary\n\n", input1.c_str());
+
+				delete[] arg1;
+				delete[] arg2;
 			}
 			else if (!input.compare("\\c"))
 			{
@@ -76,7 +110,8 @@ int main(int argc, char* argv[])
 			}
 			else if (!input.compare("\\i"))
 			{
-				t->import_tsv(input1);
+				t->import_csv(input1);
+				printf("\n");
 			}
 			else if (!input.compare("\\e"))
 			{
@@ -110,7 +145,7 @@ void pick_dictionary( std::string& dictionary_name )
 	{
 		if ( std::string(dir->d_name).compare(".") && std::string(dir->d_name).compare("..") )
 		{
-			printf("%s\n", dir->d_name);
+			std::cout << dir->d_name << std::endl;
 			dictionaries.push_back(dir->d_name);
 		}
 	}
@@ -124,15 +159,20 @@ void pick_dictionary( std::string& dictionary_name )
 	{
 		printf("\nDictionary given NOT found\n");
 		printf("Creating new dictionary file...\n");
-		
+
 		FILE* file = fopen(("./dictionaries/" + given_dictionary).c_str(), "wb");
 		if (file == NULL)
 		{
 			fprintf(stderr, "Error opening file %s\n", ("./dictionaries/" + given_dictionary).c_str());
 			exit(-1);
 		}
+
+		uint32_t character_size = CHARACTER_BYTES;
+		fwrite( &character_size, sizeof(uint32_t), 1, file);
+
 		uint32_t entry_count = 0;
 		fwrite( &entry_count, sizeof(uint32_t), 1, file);
+
 		fclose(file);
 
 		printf("Dictionary file created successfully\n");
