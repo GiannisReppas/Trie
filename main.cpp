@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
 		printf("\\d w        ||| delete word w and its translation\n");
 		printf("\\c          ||| get total number of saved translations in Trie\n");
 		printf("\\i filename ||| import tsv file of format (word,translation)\n");
+		printf("\\z filename ||| delete tsv file of format (word,translation) - translation is ignored, used mainly for debugging\n");
 		printf("\\e 1        ||| exit and save changes\n");
 		printf("\\e 0        ||| exit without saving changes\n");
 
@@ -65,7 +66,7 @@ int main(int argc, char* argv[])
 			}
 			else if (!input.compare("\\s"))
 			{
-				printf("Searching word: (word -> %s)\n", input1.c_str());
+				printf("Searching: (word -> %s)\n", input1.c_str());
 
 				arg1 = triectionary::str_to_c( input1 );
 
@@ -110,7 +111,12 @@ int main(int argc, char* argv[])
 			}
 			else if (!input.compare("\\i"))
 			{
-				t->import_csv(input1);
+				t->insert_from_csv(input1);
+				printf("\n");
+			}
+			else if (!input.compare("\\z"))
+			{
+				t->delete_from_csv(input1);
 				printf("\n");
 			}
 			else if (!input.compare("\\e"))
@@ -238,7 +244,7 @@ bool parse_input( std::string& input, std::string& input1, std::string& input2)
 				return false;
 			}
 		}
-		else if ( (!strings[0].compare("\\s")) || (!strings[0].compare("\\d")) || (!strings[0].compare("\\i")) )
+		else if ( (!strings[0].compare("\\s")) || (!strings[0].compare("\\d")) || (!strings[0].compare("\\i")) || (!strings[0].compare("\\z"))  )
 		{
 			input = strings[0];
 			input1 = "";

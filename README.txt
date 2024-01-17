@@ -7,4 +7,4 @@ Future plans:
 4) Use a similar data-structure for the translation strings
 5) More effective load-save operations on disk
 6) python bindings
-7) RLE on active_letters
+7) switch between RLE and normal bitmapping when it is most optimal

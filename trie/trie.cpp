@@ -117,83 +117,26 @@ void Trie::destroy_trie_node( TrieNode *to_destroy, std::vector<character_t> cur
 	// remember to delete translation before deleting the node
 	delete[] to_destroy->translation;
 
-	// read active letters in current node
+	// read zeros map
 	// for every active letter that you find, call recursive destruction function
-	uint32_t c;
 	uint32_t next_child = 0;
-	for ( uint32_t i = 0; i < (TOTAL_ALPHABET_SIZE/32); i++)
+	uint32_t next_zeros_group = 0;
+	for (uint32_t letter = 0; letter < TOTAL_ALPHABET_SIZE; letter++)
 	{
-		c = to_destroy->active_letters[i];
+		if ( (next_zeros_group < to_destroy->active_letters_size) && (letter == to_destroy->active_letters[next_zeros_group]) )
+		{
+			letter = to_destroy->active_letters[next_zeros_group+1]+1;
+			if (letter >= TOTAL_ALPHABET_SIZE)
+				break;
+			next_zeros_group += 2;
+		}
 
-		// we always assume that 1 uint32_t contains 32 bits, so we do a small loop-unrolling
-		if (c & 0b10000000000000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+0), file);
-		if (c & 0b01000000000000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+1), file);
-		if (c & 0b00100000000000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+2), file);
-		if (c & 0b00010000000000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+3), file);
-		if (c & 0b00001000000000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+4), file);
-		if (c & 0b00000100000000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+5), file);
-		if (c & 0b00000010000000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+6), file);
-		if (c & 0b00000001000000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+7), file);
-		if (c & 0b00000000100000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+8), file);
-		if (c & 0b00000000010000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+9), file);
-		if (c & 0b00000000001000000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+10), file);
-		if (c & 0b00000000000100000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+11), file);
-		if (c & 0b00000000000010000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+12), file);
-		if (c & 0b00000000000001000000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+13), file);
-		if (c & 0b00000000000000100000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+14), file);
-		if (c & 0b00000000000000010000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+15), file);
-		if (c & 0b00000000000000001000000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+16), file);
-		if (c & 0b00000000000000000100000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+17), file);
-		if (c & 0b00000000000000000010000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+18), file);
-		if (c & 0b00000000000000000001000000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+19), file);
-		if (c & 0b00000000000000000000100000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+20), file);
-		if (c & 0b00000000000000000000010000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+21), file);
-		if (c & 0b00000000000000000000001000000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+22), file);
-		if (c & 0b00000000000000000000000100000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+23), file);
-		if (c & 0b00000000000000000000000010000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+24), file);
-		if (c & 0b00000000000000000000000001000000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+25), file);
-		if (c & 0b00000000000000000000000000100000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+26), file);
-		if (c & 0b00000000000000000000000000010000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+27), file);
-		if (c & 0b00000000000000000000000000001000)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+28), file);
-		if (c & 0b00000000000000000000000000000100)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+29), file);
-		if (c & 0b00000000000000000000000000000010)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+30), file);
-		if (c & 0b00000000000000000000000000000001)
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, i*32+31), file);
+		this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, letter), file);
 	}
 
 	// at this point, you know that all children of this node are deleted
 	// so, delete current node
+	delete[] to_destroy->active_letters;
 	delete[] to_destroy->children;
 	delete to_destroy;
 }
@@ -201,7 +144,30 @@ void Trie::destroy_trie_node( TrieNode *to_destroy, std::vector<character_t> cur
 bool Trie::is_empty()
 {
 	return (this->head->children = NULL);
-	//return (this->head->get_actives_count() == 0);
+	//return (this->head->get_children_count() == 0);
+}
+
+character_t* Trie::search_word( const character_t* word)
+{
+	TrieNode* current = this->head;
+	TrieNode* previous = NULL;
+	uint32_t current_word_position = -1;
+
+	// read existing Trie until you reach unsaved part of the word
+	// for a successful search, we should not have an unsaved part
+	while (current != NULL)
+	{
+		++current_word_position;
+
+		previous = current;
+		current = current->get_node_if_possible( word[current_word_position] );
+	}
+
+	// report an error if word given is not saved or it doesn't have a translation
+	if ( (strlen(word) != current_word_position) || previous->translation == NULL)
+		return NULL;
+
+	return previous->translation;
 }
 
 character_t* Trie::add_word( const character_t* word, const character_t* translation)
@@ -234,29 +200,6 @@ character_t* Trie::add_word( const character_t* word, const character_t* transla
 	previous->translation = new character_t[strlen(translation) + 1];
 	strcpy( previous->translation, translation);
 	this->entry_count++;
-
-	return previous->translation;
-}
-
-character_t* Trie::search_word( const character_t* word)
-{
-	TrieNode* current = this->head;
-	TrieNode* previous = NULL;
-	uint32_t current_word_position = -1;
-
-	// read existing Trie until you reach unsaved part of the word
-	// for a successful search, we should not have an unsaved part
-	while (current != NULL)
-	{
-		++current_word_position;
-
-		previous = current;
-		current = current->get_node_if_possible( word[current_word_position] );
-	}
-
-	// report an error if word given is not saved or it doesn't have a translation
-	if ( (strlen(word) != current_word_position) || previous->translation == NULL)
-		return NULL;
 
 	return previous->translation;
 }
@@ -300,16 +243,17 @@ character_t* Trie::delete_word( const character_t* word)
 	// loop through the delete path in reverse order (same as looping through the word letters)
 	for (int i=strlen(word); i > -1; i--)
 	{
-		// if the node in the delete path
+		// if the node is in the delete path and
 		// 	1) doesn't have children (empty)
 		//  2) doesn't have a translation
 		//  3) is not the head of the trie
-		// , then delete it
-		// , otherwise, end of deletion process
+		// ,then delete it
+		// ,otherwise, end of deletion process
 
 		if ( (delete_path[i]->children == NULL) &&
 			(delete_path[i]->translation == NULL) && (this->head != delete_path[i]) )
 		{
+			delete[] delete_path[i]->active_letters;
 			delete delete_path[i];
 			delete_path[i-1]->set_child_null( word[i-1] );
 		}
@@ -338,7 +282,7 @@ void Trie::set_saving_changes(bool decision)
 	this->saving_changes = decision;
 }
 
-void Trie::import_csv( std::string filename)
+void Trie::insert_from_csv( std::string filename)
 {
 	/* the tsv file needs to have the format: word 'comma' translation
 		in case of multiple commas, the 1st one is chosen as a separator */
@@ -369,6 +313,45 @@ void Trie::import_csv( std::string filename)
 			arg1 = str_to_c(word);
 			arg2 = str_to_c(translation);
 			this->add_word( arg1, arg2 );
+			delete[] arg1;
+			delete[] arg2;
+		}
+	}
+
+	// close tsv file
+	cvs_file.close();
+}
+
+void Trie::delete_from_csv( std::string filename)
+{
+	/* the tsv file needs to have the format: word 'comma' translation
+		in case of multiple commas, the 1st one is chosen as a separator */
+
+	// open the tsv file
+	std::ifstream cvs_file(filename);
+	if (!cvs_file.is_open())
+	{
+		printf("error - cannot open file %s\n", filename.c_str());
+		exit(-1);
+	}
+
+	// read file line-by-line
+	std::string word, translation;
+	std::string line;
+	character_t *arg1, *arg2;
+	while (std::getline(cvs_file, line))
+	{
+		auto comma_pos = line.find(",");
+
+		// check if comma exists in the line
+		if (comma_pos != line.npos)
+		{
+			word = line.substr( 0, comma_pos);
+			translation = line.substr( comma_pos+1, line.size()-comma_pos);
+
+			// add tuple
+			arg1 = str_to_c(word);
+			arg2 = this->delete_word( arg1 );
 			delete[] arg1;
 			delete[] arg2;
 		}

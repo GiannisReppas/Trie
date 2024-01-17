@@ -22,15 +22,16 @@ public:
 
 	bool is_empty();
 
-	character_t* add_word( const character_t*, const character_t*);
 	character_t* search_word( const character_t*);
+	character_t* add_word( const character_t*, const character_t*);
 	character_t* delete_word( const character_t*);
 
 	uint32_t get_entry_count();
 
 	void set_saving_changes( bool );
 
-	void import_csv( std::string );
+	void insert_from_csv( std::string );
+	void delete_from_csv( std::string );
 }Trie;
 
 }

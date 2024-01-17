@@ -9,9 +9,11 @@ namespace triectionary
 typedef class TrieNode
 {
 public:
-	/* stable size of (TOTAL_ALPHABET_SIZE/32)*sizeof(uint32_t) bytes
-	 uint32_t always 4 bytes */
-	uint32_t active_letters[TOTAL_ALPHABET_SIZE/32];
+	/* variable size ( 0 to ((TOTAL_ALPHABET_SIZE/2) * 2) * sizeof(character_t) )
+		worst case when bits have the form of 01010101... active_letters add 2 elements for
+		each 0 bit */
+	character_t *active_letters;
+	uint32_t active_letters_size;
 
 	/* variable size (0 to TOTAL_ALPHABET_SIZE*sizeof(pointer)) bytes
 	 pointer usually 8 bytes */
@@ -26,7 +28,7 @@ public:
 	TrieNode();
 	~TrieNode();
 
-	uint32_t get_actives_count();
+	uint32_t get_children_count();
 
 	TrieNode* get_node_if_possible( character_t );
 	TrieNode* insert_letter( character_t );

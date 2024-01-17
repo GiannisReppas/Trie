@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string>
 
-#define CHARACTER_BYTES 4
+#define CHARACTER_BYTES 1
 
 /* make sure that you only have character sizes of either 1, 2 or 4 bytes */
 static_assert( (CHARACTER_BYTES == 1) || (CHARACTER_BYTES == 2) || (CHARACTER_BYTES == 4),
