@@ -185,8 +185,8 @@ bool parse_input( std::string& input, std::string& input1, std::string& input2)
 {
 	// split input string
 	std::vector<std::string> strings;
-	int startIndex = 0, endIndex = 0;
-	for (int i = 0; i <= input.size(); i++)
+	uint32_t startIndex = 0, endIndex = 0;
+	for (uint32_t i = 0; i <= input.size(); i++)
 	{
 		if (input[i] == ' ' || i == input.size())
 		{

@@ -20,9 +20,9 @@ TrieNode::~TrieNode()
 {
 }
 
-int TrieNode::get_actives_count()
+uint32_t TrieNode::get_actives_count()
 {
-	int toReturn = 0;
+	uint32_t toReturn = 0;
 	uint32_t c;
 
 	// read array of uin32_t of the node, report number of 1 bits

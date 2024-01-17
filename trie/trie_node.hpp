@@ -10,8 +10,7 @@ typedef class TrieNode
 {
 public:
 	/* stable size of (TOTAL_ALPHABET_SIZE/32)*sizeof(uint32_t) bytes
-	 uint8_t always 1 byte,
-	 compilation fails if TOTAL_ALPHABET_SIZE isn't multiple of 32 */
+	 uint32_t always 4 bytes */
 	uint32_t active_letters[TOTAL_ALPHABET_SIZE/32];
 
 	/* variable size (0 to TOTAL_ALPHABET_SIZE*sizeof(pointer)) bytes
@@ -27,7 +26,7 @@ public:
 	TrieNode();
 	~TrieNode();
 
-	int get_actives_count();
+	uint32_t get_actives_count();
 
 	TrieNode* get_node_if_possible( character_t );
 	TrieNode* insert_letter( character_t );

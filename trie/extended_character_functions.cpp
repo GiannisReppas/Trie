@@ -34,11 +34,11 @@ namespace triectionary
 
 	character_t* str_to_c(std::string toConvert)
 	{
-		uint8_t toConvertSize = toConvert.size();
+		uint32_t toConvertSize = toConvert.size();
 
 		character_t* toReturn = new character_t[toConvertSize + 1];
 
-		for (int i = 0; i < toConvertSize; i++)
+		for (uint32_t i = 0; i < toConvertSize; i++)
 		{
 			toReturn[i] = toConvert[i];
 		}
