@@ -1,4 +1,7 @@
-A Trie Data Structure to manage in-memory words in the format of (word -> translation) effectively.
+A Trie Data Structure to manage words in-memory in the format of (word -> translation) effectively.
+
+Trie data structure offers super-fast insert, search and delete operations.
+Compression techniques like bit-mapping and RLE result in small memory load of the data structure.
 
 Future plans:
 1) cmake compilation
@@ -9,3 +12,4 @@ Future plans:
 6) python bindings
 7) switch between RLE and normal bitmapping when it is most optimal
 8) add real alphabet - integer mapping outside of the library
+9) add prefix, etc. functionality
