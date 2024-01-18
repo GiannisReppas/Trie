@@ -1,6 +1,8 @@
 #include <fstream>
 #include <vector>
 
+#include <iostream>
+
 #include "def.hpp"
 #include "extended_character_functions.hpp"
 #include "trie_node.hpp"
@@ -121,13 +123,18 @@ void Trie::destroy_trie_node( TrieNode *to_destroy, std::vector<character_t> cur
 	// for every active letter that you find, call recursive destruction function
 	uint32_t next_child = 0;
 	uint32_t next_zeros_group = 0;
-	for (uint32_t letter = 0; letter < TOTAL_ALPHABET_SIZE; letter++)
+	for (character_t letter = 0; letter < TOTAL_ALPHABET_SIZE; letter++)
 	{
 		if ( (next_zeros_group < to_destroy->active_letters_size) && (letter == to_destroy->active_letters[next_zeros_group]) )
 		{
-			letter = to_destroy->active_letters[next_zeros_group+1]+1;
-			if (letter >= TOTAL_ALPHABET_SIZE)
+			letter = to_destroy->active_letters[next_zeros_group+1];
+//std::cout << "active letters is: [" << to_destroy->active_letters[0] << "," << to_destroy->active_letters[1] << "] and letter is " << letter << "\n";
+			if (letter == (TOTAL_ALPHABET_SIZE-1))
+			{
+//printf("Hi\n");
 				break;
+			}
+			letter++;
 			next_zeros_group += 2;
 		}
 
