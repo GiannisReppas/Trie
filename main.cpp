@@ -16,13 +16,16 @@ int main(int argc, char* argv[])
 {
 	setlocale(LC_ALL, "");
 
+	// read dictionary name from user
 	std::string dictionary_name;
 	pick_dictionary( dictionary_name );
 
+	// set up the Trie
 	printf("\nBringing data in memory...\n");
 	triectionary::Trie* t = new triectionary::Trie( dictionary_name.c_str() );
 	printf("Trie set up successfully :)\n\n");
 
+	// start reading input commands from the user
 	std::string input, input1, input2;
 	character_t *arg1, *arg2;
 	bool correct_input;
@@ -33,8 +36,8 @@ int main(int argc, char* argv[])
 		printf("\\s w        ||| search for the translation of word w\n");
 		printf("\\d w        ||| delete word w and its translation\n");
 		printf("\\c          ||| get total number of saved translations in Trie\n");
-		printf("\\i filename ||| import tsv file of format (word,translation)\n");
-		printf("\\z filename ||| delete tsv file of format (word,translation) - translation is ignored, used mainly for debugging\n");
+		printf("\\i filename ||| import csv file of format (word,translation)\n");
+		printf("\\z filename ||| delete csv file of format (word,translation) - translation is ignored, used mainly for debugging\n");
 		printf("\\e 1        ||| exit and save changes\n");
 		printf("\\e 0        ||| exit without saving changes\n");
 
@@ -75,7 +78,7 @@ int main(int argc, char* argv[])
 				if ( arg2 != NULL )
 				{
 					printf("%s -> ", input1.c_str());
-					for (uint32_t i = 0; arg2[i] != '\0'; i++)
+					for (uint32_t i = 0; arg2[i] != END_OF_STRING; i++)
 						printf("%lc", arg2[i]);
 					printf("\n\n");
 				}
@@ -95,7 +98,7 @@ int main(int argc, char* argv[])
 				if ( arg2 != NULL )
 				{
 					printf("Deleted word %s with translation ", input1.c_str());
-					for (uint32_t i = 0; arg2[i] != '\0'; i++)
+					for (uint32_t i = 0; arg2[i] != END_OF_STRING; i++)
 						printf("%lc", arg2[i]);
 					printf(" successfully from Trie\n\n");
 				}
@@ -129,6 +132,7 @@ int main(int argc, char* argv[])
 	}
 	while(true);
 
+	// destroy memory used for Trie
 	delete t;
 
 	return 0;
@@ -136,7 +140,7 @@ int main(int argc, char* argv[])
 
 void pick_dictionary( std::string& dictionary_name )
 {
-	// show available dictionaries
+	// show available dictionaries (only in the /dictionaries/ directory)
 	printf("Welcome, these are the available dictionaries:\n\n");
 	std::vector<std::string> dictionaries;
 	DIR *d;

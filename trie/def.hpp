@@ -6,6 +6,8 @@
 
 #define CHARACTER_BYTES 4
 
+#define END_OF_STRING 0
+
 /* make sure that you only have character sizes of either 1, 2 or 4 bytes */
 static_assert( (CHARACTER_BYTES == 1) || (CHARACTER_BYTES == 2) || (CHARACTER_BYTES == 4),
 	"You can only have the following character byte sizes: 1, 2, 4\n");

@@ -8,3 +8,4 @@ Future plans:
 5) More effective load-save operations on disk
 6) python bindings
 7) switch between RLE and normal bitmapping when it is most optimal
+8) add real alphabet - integer mapping outside of the library

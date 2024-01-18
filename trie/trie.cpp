@@ -1,8 +1,6 @@
 #include <fstream>
 #include <vector>
 
-#include <iostream>
-
 #include "def.hpp"
 #include "extended_character_functions.hpp"
 #include "trie_node.hpp"
@@ -14,10 +12,10 @@ namespace triectionary
 Trie::Trie(std::string dictionary_name)
 {
 	// set up head node, 0 entries, dictionary name, saving_changes setting
-	this->saving_changes = false;
+	this->head = new TrieNode();
 	this->entry_count = 0;
 	this->dictionary_name = dictionary_name;
-	this->head = new TrieNode();
+	this->saving_changes = false;
 
 	// open dictionary file to read it
 	FILE* file = fopen(this->dictionary_name.c_str(), "rb");
@@ -50,13 +48,13 @@ Trie::Trie(std::string dictionary_name)
 		fread( &word_size, sizeof(uint32_t), 1, file);
 		current_word = new character_t[word_size+1];
 		fread( current_word, sizeof(character_t), word_size, file);
-		current_word[word_size] = '\0';
+		current_word[word_size] = END_OF_STRING;
 
 		// read translation
 		fread( &word_size, sizeof(uint32_t), 1, file);
 		current_translation = new character_t[word_size+1];
 		fread( current_translation, sizeof(character_t), word_size, file);
-		current_translation[word_size] = '\0';
+		current_translation[word_size] = END_OF_STRING;
 
 		// add tuple
 		this->add_word( current_word, current_translation);
@@ -74,37 +72,37 @@ Trie::~Trie()
 {
 	FILE* file;
 
-	// open dictionary file to write from scratch
 	if (this->saving_changes)
 	{
+		// open dictionary file to write from scratch
 		file = fopen( this->dictionary_name.c_str(), "wb");
 		if (file == NULL)
 		{
 			fprintf(stderr, "Error opening the file\n");
 			exit(-1);
 		}
-	}
 
-	// write character size and total entries for this dictionary
-	if (this->saving_changes)
-	{
+		// write character size and total entries for this dictionary
 		uint32_t character_size = CHARACTER_BYTES;
 		fwrite( &character_size, sizeof(uint32_t), 1, file);
 
 		fwrite( &this->entry_count, sizeof(uint32_t), 1, file);
 	}
 
-	//  start writing and deleting nodes, recursively
+	//  start deleting nodes, recursively
 	this->destroy_trie_node( this->head, std::vector<character_t>(), std::vector<character_t>(), file);
 
-	// close dictionary file
 	if (this->saving_changes)
+	{
+		// close dictionary file
 		fclose(file);
+	}
 }
 
-void Trie::destroy_trie_node( TrieNode *to_destroy, std::vector<character_t> current_word, std::vector<character_t> to_append, FILE* file)
+void Trie::destroy_trie_node( TrieNode *to_destroy, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file)
 {
-	current_word.insert(current_word.end(), to_append.begin(), to_append.end());
+	// append letter of path to current word
+	current_word.insert(current_word.end(), letter_to_append.begin(), letter_to_append.end());
 
 	if ( (this->saving_changes) && (to_destroy->translation != NULL) )
 	{
@@ -116,22 +114,18 @@ void Trie::destroy_trie_node( TrieNode *to_destroy, std::vector<character_t> cur
 		fwrite( &word_size, sizeof(uint32_t), 1, file);
 		fwrite( to_destroy->translation, sizeof(character_t), strlen(to_destroy->translation), file);
 	}
-	// remember to delete translation before deleting the node
-	delete[] to_destroy->translation;
 
 	// read zeros map
 	// for every active letter that you find, call recursive destruction function
-	uint32_t next_child = 0;
-	uint32_t next_zeros_group = 0;
+	character_t next_child = 0;
+	character_t next_zeros_group = 0;
 	for (character_t letter = 0; letter < TOTAL_ALPHABET_SIZE; letter++)
 	{
-		if ( (next_zeros_group < to_destroy->active_letters_size) && (letter == to_destroy->active_letters[next_zeros_group]) )
+		if ( (next_zeros_group < to_destroy->zeros_map_size) && (letter == to_destroy->zeros_map[next_zeros_group]) )
 		{
-			letter = to_destroy->active_letters[next_zeros_group+1];
-//std::cout << "active letters is: [" << to_destroy->active_letters[0] << "," << to_destroy->active_letters[1] << "] and letter is " << letter << "\n";
+			letter = to_destroy->zeros_map[next_zeros_group+1];
 			if (letter == (TOTAL_ALPHABET_SIZE-1))
 			{
-//printf("Hi\n");
 				break;
 			}
 			letter++;
@@ -143,7 +137,8 @@ void Trie::destroy_trie_node( TrieNode *to_destroy, std::vector<character_t> cur
 
 	// at this point, you know that all children of this node are deleted
 	// so, delete current node
-	delete[] to_destroy->active_letters;
+	delete[] to_destroy->translation;
+	delete[] to_destroy->zeros_map;
 	delete[] to_destroy->children;
 	delete to_destroy;
 }
@@ -193,7 +188,7 @@ character_t* Trie::add_word( const character_t* word, const character_t* transla
 	}
 
 	// start inserting TrieNodes (letters)
-	while ( word[current_word_position] != '\0' )
+	while ( word[current_word_position] != END_OF_STRING )
 	{
 		previous = previous->insert_letter( word[current_word_position] );
 		++current_word_position;
@@ -206,6 +201,7 @@ character_t* Trie::add_word( const character_t* word, const character_t* transla
 	// add word with translation, increase entry_count
 	previous->translation = new character_t[strlen(translation) + 1];
 	strcpy( previous->translation, translation);
+
 	this->entry_count++;
 
 	return previous->translation;
@@ -250,17 +246,16 @@ character_t* Trie::delete_word( const character_t* word)
 	// loop through the delete path in reverse order (same as looping through the word letters)
 	for (int i=strlen(word); i > -1; i--)
 	{
-		// if the node is in the delete path and
-		// 	1) doesn't have children (empty)
-		//  2) doesn't have a translation
-		//  3) is not the head of the trie
-		// ,then delete it
-		// ,otherwise, end of deletion process
+		/* if the node is in the delete path and
+			1) doesn't have children (empty)
+			2) doesn't have a translation
+			3) is not the head of the trie
+		   ,then delete it and inform its parent about the deletion
+		   ,otherwise, end of deletion process */
 
-		if ( (delete_path[i]->children == NULL) &&
-			(delete_path[i]->translation == NULL) && (this->head != delete_path[i]) )
+		if ( (delete_path[i]->children == NULL) && (delete_path[i]->translation == NULL) && (delete_path[i] != this->head) )
 		{
-			delete[] delete_path[i]->active_letters;
+			delete[] delete_path[i]->zeros_map;
 			delete delete_path[i];
 			delete_path[i-1]->set_child_null( word[i-1] );
 		}
@@ -270,10 +265,10 @@ character_t* Trie::delete_word( const character_t* word)
 		}
 	}
 
-	// decrease the entry count by 1s
+	// decrease the entry count by 1
 	this->entry_count--;
 
-	// delete all saved delete path
+	// delete all saved delete path pointers
 	delete[] delete_path;
 
 	return toReturn;
@@ -291,10 +286,10 @@ void Trie::set_saving_changes(bool decision)
 
 void Trie::insert_from_csv( std::string filename)
 {
-	/* the tsv file needs to have the format: word 'comma' translation
+	/* the csv file needs to have the format: word,translation
 		in case of multiple commas, the 1st one is chosen as a separator */
 
-	// open the tsv file
+	// open the csv file
 	std::ifstream cvs_file(filename);
 	if (!cvs_file.is_open())
 	{
@@ -325,16 +320,16 @@ void Trie::insert_from_csv( std::string filename)
 		}
 	}
 
-	// close tsv file
+	// close csv file
 	cvs_file.close();
 }
 
 void Trie::delete_from_csv( std::string filename)
 {
-	/* the tsv file needs to have the format: word 'comma' translation
+	/* the csv file needs to have the format: word,translation
 		in case of multiple commas, the 1st one is chosen as a separator */
 
-	// open the tsv file
+	// open the csv file
 	std::ifstream cvs_file(filename);
 	if (!cvs_file.is_open())
 	{
@@ -354,9 +349,9 @@ void Trie::delete_from_csv( std::string filename)
 		if (comma_pos != line.npos)
 		{
 			word = line.substr( 0, comma_pos);
-			translation = line.substr( comma_pos+1, line.size()-comma_pos);
+			//translation = line.substr( comma_pos+1, line.size()-comma_pos);
 
-			// add tuple
+			// delete tuple
 			arg1 = str_to_c(word);
 			arg2 = this->delete_word( arg1 );
 			delete[] arg1;
@@ -364,7 +359,7 @@ void Trie::delete_from_csv( std::string filename)
 		}
 	}
 
-	// close tsv file
+	// close csv file
 	cvs_file.close();
 }
 

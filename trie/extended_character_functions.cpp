@@ -8,7 +8,7 @@ namespace triectionary
 		uint32_t toReturn = 0;
 		uint32_t current_index = 0;
 
-		while (array[current_index++] != '\0')
+		while (array[current_index++] != END_OF_STRING)
 		{
 			++toReturn;
 		}
@@ -20,14 +20,14 @@ namespace triectionary
 	{
 		uint32_t current_index = 0;
 
-		while (src[current_index] != '\0')
+		while (src[current_index] != END_OF_STRING)
 		{
 			dst[current_index] = src[current_index];
 
 			++current_index;
 		}
 
-		dst[current_index] = '\0';
+		dst[current_index] = END_OF_STRING;
 
 		return dst;
 	}
@@ -43,8 +43,9 @@ namespace triectionary
 			toReturn[i] = toConvert[i];
 		}
 
-		toReturn[toConvertSize] = '\0';
+		toReturn[toConvertSize] = END_OF_STRING;
 
 		return toReturn;
 	}
+
 }
