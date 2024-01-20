@@ -5,7 +5,7 @@ Compression techniques like bit-mapping and RLE result in small memory load of t
 
 Future plans:
 1) cmake compilation
-2) exceptions
+2) create Trienodes of diff types in the same program
 3) custom characters size (diff. than 1/2/4 bytes)
 4) Use a similar data-structure for the translation strings
 5) More effective load-save operations on disk

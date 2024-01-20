@@ -6,7 +6,7 @@
 namespace triectionary
 {
 
-typedef class TrieNode
+class TrieNode
 {
 public:
 	/* variable size ( 2 to ((TOTAL_ALPHABET_SIZE/2) * 2) * sizeof(character_t) )
@@ -42,7 +42,7 @@ public:
 		assumes that letter given as argument will always be 1 in current zeros_map */
 	void set_child_null( character_t );
 
-}TrieNode;
+};
 
 }
 

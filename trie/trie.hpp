@@ -7,7 +7,7 @@
 namespace triectionary
 {
 
-typedef class Trie
+class Trie
 {
 private:
 	/* pointer to the head trie node of the Trie */
@@ -55,7 +55,7 @@ public:
 		delete is used mainly for debugging and ignored the provided translation */
 	void insert_from_csv( std::string );
 	void delete_from_csv( std::string );
-}Trie;
+};
 
 }
 

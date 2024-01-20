@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "def.hpp"
+#include "exceptions.hpp"
 #include "extended_character_functions.hpp"
 #include "trie_node.hpp"
 #include "trie.hpp"
@@ -12,7 +13,6 @@ namespace triectionary
 Trie::Trie(std::string dictionary_name)
 {
 	// set up head node, 0 entries, dictionary name, saving_changes setting
-	this->head = new TrieNode();
 	this->entry_count = 0;
 	this->dictionary_name = dictionary_name;
 	this->saving_changes = false;
@@ -20,19 +20,19 @@ Trie::Trie(std::string dictionary_name)
 	// open dictionary file to read it
 	FILE* file = fopen(this->dictionary_name.c_str(), "rb");
 	if (file == NULL)
-	{
-		printf("Error opening file %s\n", this->dictionary_name.c_str());
-		exit(-1);
-	}
+		throw ErrorOpeningDictionaryException(this->dictionary_name);
 
 	// read character size for this dictionary
 	uint32_t character_size;
 	fread( &character_size, sizeof(uint32_t), 1, file);
 	if (character_size != CHARACTER_BYTES)
 	{
-		printf("Dictionary can't be read - Different character size\n");
-		exit(1);
+		fclose(file);
+		throw ErrorReadingDictionaryException( this->dictionary_name, "Conflicting Trie and File types");
 	}
+
+	// set up head node
+	this->head = new TrieNode();
 
 	// read total number of entries to insert in the trie
 	uint32_t local_entry_count;
@@ -74,19 +74,24 @@ Trie::~Trie()
 
 	if (this->saving_changes)
 	{
-		// open dictionary file to write from scratch
-		file = fopen( this->dictionary_name.c_str(), "wb");
-		if (file == NULL)
+		try
 		{
-			fprintf(stderr, "Error opening the file\n");
-			exit(-1);
+			// open dictionary file to write from scratch
+			file = fopen( this->dictionary_name.c_str(), "wb");
+			if (file == NULL)
+				throw ErrorOpeningDictionaryException(this->dictionary_name);
+
+			// write character size and total entries for this dictionary
+			uint32_t character_size = CHARACTER_BYTES;
+			fwrite( &character_size, sizeof(uint32_t), 1, file);
+
+			fwrite( &this->entry_count, sizeof(uint32_t), 1, file);
 		}
-
-		// write character size and total entries for this dictionary
-		uint32_t character_size = CHARACTER_BYTES;
-		fwrite( &character_size, sizeof(uint32_t), 1, file);
-
-		fwrite( &this->entry_count, sizeof(uint32_t), 1, file);
+		catch (ErrorOpeningDictionaryException eode)
+		{
+			printf("Error opening dictionary file to write changes. Changes will not be saved.\n");
+			this->saving_changes = false;
+		}
 	}
 
 	//  start deleting nodes, recursively
@@ -292,10 +297,7 @@ void Trie::insert_from_csv( std::string filename)
 	// open the csv file
 	std::ifstream cvs_file(filename);
 	if (!cvs_file.is_open())
-	{
-		printf("error - cannot open file %s\n", filename.c_str());
-		exit(-1);
-	}
+		throw ErrorOpeningCsvException(filename);
 
 	// read file line-by-line
 	std::string word, translation;
@@ -332,10 +334,7 @@ void Trie::delete_from_csv( std::string filename)
 	// open the csv file
 	std::ifstream cvs_file(filename);
 	if (!cvs_file.is_open())
-	{
-		printf("error - cannot open file %s\n", filename.c_str());
-		exit(-1);
-	}
+		throw ErrorOpeningCsvException(filename);
 
 	// read file line-by-line
 	std::string word, translation;

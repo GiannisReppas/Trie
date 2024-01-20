@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string>
 
-#define CHARACTER_BYTES 4
+#define CHARACTER_BYTES 2
 
 #define END_OF_STRING 0
 

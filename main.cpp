@@ -5,6 +5,7 @@
 #include <locale.h>
 
 #include "trie/def.hpp"
+#include "trie/exceptions.hpp"
 #include "trie/extended_character_functions.hpp"
 #include "trie/trie_node.hpp"
 #include "trie/trie.hpp"
@@ -16,14 +17,34 @@ int main(int argc, char* argv[])
 {
 	setlocale(LC_ALL, "");
 
-	// read dictionary name from user
 	std::string dictionary_name;
-	pick_dictionary( dictionary_name );
+	triectionary::Trie* t;
 
-	// set up the Trie
-	printf("\nBringing data in memory...\n");
-	triectionary::Trie* t = new triectionary::Trie( dictionary_name.c_str() );
-	printf("Trie set up successfully :)\n\n");
+	bool successful_setup = false;
+	while (!successful_setup)
+	{
+		// read dictionary name from user
+		pick_dictionary( dictionary_name );
+
+		// set up the Trie
+		try
+		{
+			printf("\nBringing data in memory...\n");
+			t = new triectionary::Trie( dictionary_name );
+			successful_setup = true;
+			printf("Trie set up successfully :)\n\n");
+		}
+		catch (triectionary::ErrorOpeningDictionaryException eode)
+		{
+			successful_setup = false;
+			std::cout << eode.info() << std::endl;
+		}
+		catch (triectionary::ErrorReadingDictionaryException erde)
+		{
+			successful_setup = false;
+			std::cout << erde.info() << std::endl;
+		}
+	}
 
 	// start reading input commands from the user
 	std::string input, input1, input2;
@@ -114,12 +135,26 @@ int main(int argc, char* argv[])
 			}
 			else if (!input.compare("\\i"))
 			{
-				t->insert_from_csv(input1);
+				try
+				{
+					t->insert_from_csv(input1);
+				}
+				catch (triectionary::ErrorOpeningCsvException eoce)
+				{
+					std::cout << eoce.info() << std::endl;
+				}
 				printf("\n");
 			}
 			else if (!input.compare("\\z"))
 			{
-				t->delete_from_csv(input1);
+				try
+				{
+					t->delete_from_csv(input1);
+				}
+				catch (triectionary::ErrorOpeningCsvException eoce)
+				{
+					std::cout << eoce.info() << std::endl;
+				}
 				printf("\n");
 			}
 			else if (!input.compare("\\e"))
