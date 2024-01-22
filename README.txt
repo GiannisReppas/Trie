@@ -8,7 +8,6 @@ Trie manages characters as unsigned integers, currently offering tyes of uint8_t
 A main function in ascii_example.cpp shows how to use a Trie of uint8_t characters to manage all ascii words.
 
 To build and run:
-
 ```
 mkdir build && cd build
 cmake .. && make
