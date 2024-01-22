@@ -1,55 +1,44 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
-#include <dirent.h>
-#include <locale.h>
+#include <fstream>
+#include <string>
 
-#include "trie/def.hpp"
-#include "trie/exceptions.hpp"
-#include "trie/extended_character_functions.hpp"
-#include "trie/trie_node.hpp"
 #include "trie/trie.hpp"
 
-void pick_dictionary( std::string&);
 bool parse_input( std::string&, std::string&, std::string&);
 
-int main(int argc, char* argv[])
+int main(void)
 {
-	setlocale(LC_ALL, "");
+	//trie::TrieNode<uint32_t> temp = trie::TrieNode<uint32_t>();
 
-	std::string dictionary_name;
-	triectionary::Trie* t;
-
-	bool successful_setup = false;
-	while (!successful_setup)
+	// check if the dictionary file exists already, if not, create a new one
+	std::ifstream filecheck("trie_ascii");
+	if (!filecheck.good())
 	{
-		// read dictionary name from user
-		pick_dictionary( dictionary_name );
+		FILE* file = fopen("trie_ascii", "wb");
+		if (file == NULL)
+		{
+			fprintf(stderr, "Error opening file trie_ascii\n");
+			exit(-1);
+		}
 
-		// set up the Trie
-		try
-		{
-			printf("\nBringing data in memory...\n");
-			t = new triectionary::Trie( dictionary_name );
-			successful_setup = true;
-			printf("Trie set up successfully :)\n\n");
-		}
-		catch (triectionary::ErrorOpeningDictionaryException eode)
-		{
-			successful_setup = false;
-			std::cout << eode.info() << std::endl;
-		}
-		catch (triectionary::ErrorReadingDictionaryException erde)
-		{
-			successful_setup = false;
-			std::cout << erde.info() << std::endl;
-		}
+		uint32_t character_size = 1;
+		fwrite( &character_size, sizeof(uint32_t), 1, file);
+
+		uint32_t entry_count = 0;
+		fwrite( &entry_count, sizeof(uint32_t), 1, file);
+
+		fclose(file);
 	}
 
-	// start reading input commands from the user
+	// load file in memory
+	trie::Trie<uint8_t>* t;
+	t = new trie::Trie<uint8_t>( "trie_ascii" );
+
+	// read input from command line
 	std::string input, input1, input2;
-	character_t *arg1, *arg2;
 	bool correct_input;
+	uint8_t *arg1, *arg2;
 	do
 	{
 		printf("Main menu:\n");
@@ -62,6 +51,7 @@ int main(int argc, char* argv[])
 		printf("\\e 1        ||| exit and save changes\n");
 		printf("\\e 0        ||| exit without saving changes\n");
 
+		// prepare for next command
 		input.clear();
 		input1.clear();
 		input2.clear();
@@ -69,16 +59,18 @@ int main(int argc, char* argv[])
 		arg2 = NULL;
 		std::getline(std::cin, input);
 
+		// split input into basic parts
 		correct_input = parse_input( input, input1, input2);
 
+		// check if command given exists
 		if (correct_input)
 		{
 			if (!input.compare("\\a"))
 			{
 				printf("inserting: (word -> %s) and (translation -> %s)\n", input1.c_str(), input2.c_str() );
 
-				arg1 = triectionary::str_to_c( input1 );
-				arg2 = triectionary::str_to_c( input2 );
+				arg1 = trie::str_to_c<uint8_t>( input1 );
+				arg2 = trie::str_to_c<uint8_t>( input2 );
 
 				if ( t->add_word( arg1, arg2 ) != NULL )
 					printf("Added word %s with translation %s successfully in Trie\n\n", input1.c_str(), input2.c_str() );
@@ -92,14 +84,14 @@ int main(int argc, char* argv[])
 			{
 				printf("Searching: (word -> %s)\n", input1.c_str());
 
-				arg1 = triectionary::str_to_c( input1 );
+				arg1 = trie::str_to_c<uint8_t>( input1 );
 
 				arg2 = t->search_word( arg1 );
 
 				if ( arg2 != NULL )
 				{
 					printf("%s -> ", input1.c_str());
-					for (uint32_t i = 0; arg2[i] != END_OF_STRING; i++)
+					for (uint32_t i = 0; arg2[i] != ::trie::end_of_string; i++)
 						printf("%lc", arg2[i]);
 					printf("\n\n");
 				}
@@ -112,14 +104,14 @@ int main(int argc, char* argv[])
 			{
 				printf("deleting: (word -> %s)\n", input1.c_str());
 
-				arg1 = triectionary::str_to_c( input1 );
+				arg1 = trie::str_to_c<uint8_t>( input1 );
 
 				arg2 = t->delete_word( arg1);
 
 				if ( arg2 != NULL )
 				{
 					printf("Deleted word %s with translation ", input1.c_str());
-					for (uint32_t i = 0; arg2[i] != END_OF_STRING; i++)
+					for (uint32_t i = 0; arg2[i] != ::trie::end_of_string; i++)
 						printf("%lc", arg2[i]);
 					printf(" successfully from Trie\n\n");
 				}
@@ -139,7 +131,7 @@ int main(int argc, char* argv[])
 				{
 					t->insert_from_csv(input1);
 				}
-				catch (triectionary::ErrorOpeningCsvException eoce)
+				catch (trie::ErrorOpeningCsvException eoce)
 				{
 					std::cout << eoce.info() << std::endl;
 				}
@@ -151,7 +143,7 @@ int main(int argc, char* argv[])
 				{
 					t->delete_from_csv(input1);
 				}
-				catch (triectionary::ErrorOpeningCsvException eoce)
+				catch (trie::ErrorOpeningCsvException eoce)
 				{
 					std::cout << eoce.info() << std::endl;
 				}
@@ -171,59 +163,6 @@ int main(int argc, char* argv[])
 	delete t;
 
 	return 0;
-}
-
-void pick_dictionary( std::string& dictionary_name )
-{
-	// show available dictionaries (only in the /dictionaries/ directory)
-	printf("Welcome, these are the available dictionaries:\n\n");
-	std::vector<std::string> dictionaries;
-	DIR *d;
-	struct dirent *dir;
-	d = opendir("./dictionaries");
-	if (!d)
-	{
-		printf("Error while reading dictionaries directory\n");
-		exit(-1);
-	}
-	while ((dir = readdir(d)) != NULL)
-	{
-		if ( std::string(dir->d_name).compare(".") && std::string(dir->d_name).compare("..") )
-		{
-			std::cout << dir->d_name << std::endl;
-			dictionaries.push_back(dir->d_name);
-		}
-	}
-	closedir(d);
-
-	// give dictionary name, create it if it doesn't exist
-	printf("Please give a dictionary name to work with: ");
-	std::string given_dictionary;
-	std::getline(std::cin, given_dictionary);
-	if(std::find(dictionaries.begin(), dictionaries.end(), given_dictionary) == dictionaries.end())
-	{
-		printf("\nDictionary given NOT found\n");
-		printf("Creating new dictionary file...\n");
-
-		FILE* file = fopen(("./dictionaries/" + given_dictionary).c_str(), "wb");
-		if (file == NULL)
-		{
-			fprintf(stderr, "Error opening file %s\n", ("./dictionaries/" + given_dictionary).c_str());
-			exit(-1);
-		}
-
-		uint32_t character_size = CHARACTER_BYTES;
-		fwrite( &character_size, sizeof(uint32_t), 1, file);
-
-		uint32_t entry_count = 0;
-		fwrite( &entry_count, sizeof(uint32_t), 1, file);
-
-		fclose(file);
-
-		printf("Dictionary file created successfully\n");
-	}
-
-	dictionary_name = "./dictionaries/" + given_dictionary;
 }
 
 bool parse_input( std::string& input, std::string& input1, std::string& input2)
