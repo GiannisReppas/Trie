@@ -9,8 +9,6 @@ bool parse_input( std::string&, std::string&, std::string&);
 
 int main(void)
 {
-	//trie::TrieNode<uint32_t> temp = trie::TrieNode<uint32_t>();
-
 	// check if the dictionary file exists already, if not, create a new one
 	std::ifstream filecheck("trie_ascii");
 	if (!filecheck.good())
@@ -18,7 +16,7 @@ int main(void)
 		FILE* file = fopen("trie_ascii", "wb");
 		if (file == NULL)
 		{
-			fprintf(stderr, "Error opening file trie_ascii\n");
+			printf("Error opening file trie_ascii\n");
 			exit(-1);
 		}
 
