@@ -11,7 +11,7 @@ class ErrorCreatingDictionaryException : std::exception
 public:
 	std::string info()
 	{
-		return "The given byte size for a character is not supported";
+		return "The given byte size for characters is not supported";
 	}
 };
 

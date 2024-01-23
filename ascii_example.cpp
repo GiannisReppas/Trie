@@ -9,26 +9,6 @@ bool parse_input( std::string&, std::string&, std::string&);
 
 int main(void)
 {
-	// check if the dictionary file exists already, if not, create a new one
-	std::ifstream filecheck("trie_ascii");
-	if (!filecheck.good())
-	{
-		FILE* file = fopen("trie_ascii", "wb");
-		if (file == NULL)
-		{
-			printf("Error opening file trie_ascii\n");
-			exit(-1);
-		}
-
-		uint32_t character_size = 1;
-		fwrite( &character_size, sizeof(uint32_t), 1, file);
-
-		uint32_t entry_count = 0;
-		fwrite( &entry_count, sizeof(uint32_t), 1, file);
-
-		fclose(file);
-	}
-
 	// load file in memory
 	trie::Trie<uint8_t>* t;
 	t = new trie::Trie<uint8_t>( "trie_ascii" );

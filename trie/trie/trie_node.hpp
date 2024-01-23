@@ -13,16 +13,20 @@ class TrieNode
 public:
 	/* variable size ( 2 to ((ALPHABET_SIZE/2) * 2) * sizeof(character_t) )
 		worst case when bits have the form of 01010101... zeros_map add 2 elements for
-		each 0 bit */
+		each 0 bit
+		due to this case, zeros_map may have size larger than max. value of character_t
+		e.g. size of 256 for character_t -> uint8_t
+		as a result, we keep half of zeros_map size, for every pair that it keeps
+		that way, we save memory */
 	character_t *zeros_map;
-	uint32_t zeros_map_size;
+	character_t zeros_map_half_size;
 
 	/* variable size (0 to ALPHABET_SIZE*sizeof(pointer)) bytes
 	 pointer usually 8 bytes */
 	class TrieNode **children;
 
 	/* variable size, 0 to translation_size*sizeof(character_size)+sizeof(character_size) bytes
-	 uint8_t always 1 byte
+	 uint8_t  always 1 byte
 	 uint16_t always 2 bytes
 	 char32_t always 4 bytes */
 	character_t *translation;
@@ -33,7 +37,7 @@ public:
 		this->zeros_map = new character_t[2];
 		this->zeros_map[0] = 0;
 		this->zeros_map[1] = std::numeric_limits<character_t>::max();
-		this->zeros_map_size = 2;
+		this->zeros_map_half_size = 1;
 
 		// no children in the node
 		this->children = NULL;
@@ -54,11 +58,11 @@ public:
 		children_count += this->zeros_map[0];
 
 		// ones between the zeros groups
-		for ( uint32_t i = 0; i < this->zeros_map_size-2; i += 2)
+		for ( uint32_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
 			children_count += this->zeros_map[i+2] - this->zeros_map[i+1] - 1;
 
 		// ones after the last zeros group
-		children_count += std::numeric_limits<character_t>::max() - this->zeros_map[this->zeros_map_size-1];
+		children_count += std::numeric_limits<character_t>::max() - this->zeros_map[(this->zeros_map_half_size*2)-1];
 
 		return children_count;
 	}
@@ -75,7 +79,7 @@ public:
 		// update current count
 		children_count += this->zeros_map[0];
 
-		for ( uint32_t i = 0; i < this->zeros_map_size-2; i += 2)
+		for ( uint32_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
 		{
 			// letter exists in a zeros group
 			if ( (this->zeros_map[i] <= letter) && (letter <= this->zeros_map[i+1]) )
@@ -90,7 +94,7 @@ public:
 		}
 
 		// letter exists in the last zeros group
-		uint32_t i = this->zeros_map_size - 2;
+		uint32_t i = (this->zeros_map_half_size*2) - 2;
 		if ( (this->zeros_map[i] <= letter) && (letter <= this->zeros_map[i+1]) )
 			return NULL;
 
@@ -116,7 +120,7 @@ public:
 		// update current count
 		children_count += this->zeros_map[0];
 
-		for ( uint32_t i = 0; i < this->zeros_map_size-2; i += 2)
+		for ( uint32_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
 		{
 			// found the zero group that letter exists
 			if ( (this->zeros_map[i] <= letter) && (letter <= this->zeros_map[i+1]) )
@@ -130,14 +134,14 @@ public:
 		}
 
 		// letter exists in the last zeros group
-		if ( (this->zeros_map[this->zeros_map_size-2] <= letter) && (letter <= this->zeros_map[this->zeros_map_size-1]) )
+		if ( (this->zeros_map[(this->zeros_map_half_size*2)-2] <= letter) && (letter <= this->zeros_map[(this->zeros_map_half_size*2)-1]) )
 		{
-			index_to_change_zeros = this->zeros_map_size-2;
+			index_to_change_zeros = (this->zeros_map_half_size*2)-2;
 			index_to_insert_children = children_count;
 		}
 
 		// update current count
-		children_count += std::numeric_limits<character_t>::max() - this->zeros_map[this->zeros_map_size-1];
+		children_count += std::numeric_limits<character_t>::max() - this->zeros_map[(this->zeros_map_half_size*2)-1];
 
 
 		/* 2) Now, create a new pointers array of size current_size+1,
@@ -174,7 +178,7 @@ public:
 			character_t *new_zeros;
 			uint32_t old_end_value = this->zeros_map[index_to_change_zeros+1];
 			this->zeros_map[index_to_change_zeros+1] = letter-1;
-			new_zeros = new character_t[this->zeros_map_size+2];
+			new_zeros = new character_t[(this->zeros_map_half_size*2)+2];
 
 			for (uint32_t i = 0; i < index_to_change_zeros+2; i++)
 				new_zeros[i] = this->zeros_map[i];
@@ -182,12 +186,12 @@ public:
 			new_zeros[index_to_change_zeros+2] = letter+1;
 			new_zeros[index_to_change_zeros+3] = old_end_value;
 
-			for (uint32_t i = index_to_change_zeros+4; i < this->zeros_map_size+2; i ++)
+			for (uint32_t i = index_to_change_zeros+4; i < (this->zeros_map_half_size*2)+2; i ++)
 				new_zeros[i] = this->zeros_map[i-2];
 
 			delete[] this->zeros_map;
 			this->zeros_map = new_zeros;
-			this->zeros_map_size += 2;
+			this->zeros_map_half_size += 1;
 		}
 		else if ( (letter == this->zeros_map[index_to_change_zeros]) && (letter != this->zeros_map[index_to_change_zeros+1]) )
 		{
@@ -200,17 +204,17 @@ public:
 		else
 		{
 			character_t *new_zeros;
-			new_zeros = new character_t[this->zeros_map_size-2];
+			new_zeros = new character_t[(this->zeros_map_half_size*2)-2];
 
 			for (uint32_t i = 0; i < index_to_change_zeros; i++)
 				new_zeros[i] = this->zeros_map[i];
 
-			for (uint32_t i = index_to_change_zeros+2; i < this->zeros_map_size; i++)
+			for (uint32_t i = index_to_change_zeros+2; i < (this->zeros_map_half_size*2); i++)
 				new_zeros[i-2] = this->zeros_map[i];
 
 			delete[] this->zeros_map;
 			this->zeros_map = new_zeros;
-			this->zeros_map_size -= 2;
+			this->zeros_map_half_size -= 1;
 		}
 
 
@@ -237,7 +241,7 @@ public:
 		// update current count
 		children_count += this->zeros_map[0];
 
-		for ( uint32_t i = 0; i < this->zeros_map_size-2; i += 2)
+		for ( uint32_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
 		{
 			// found the zero group after which the letter exists
 			if ( (this->zeros_map[i+1] < letter) && (letter < this->zeros_map[i+2]) )
@@ -251,14 +255,14 @@ public:
 		}
 
 		// letter exists after the last zeros group
-		if ( (this->zeros_map[this->zeros_map_size-1] < letter) )
+		if ( (this->zeros_map[(this->zeros_map_half_size*2)-1] < letter) )
 		{
-			index_to_change_zeros = this->zeros_map_size-1;
-			index_to_delete_children = children_count + (letter - this->zeros_map[this->zeros_map_size - 1]) - 1;
+			index_to_change_zeros = (this->zeros_map_half_size*2)-1;
+			index_to_delete_children = children_count + (letter - this->zeros_map[(this->zeros_map_half_size*2) - 1]) - 1;
 		}
 
 		// update current count
-		children_count += std::numeric_limits<character_t>::max() - this->zeros_map[this->zeros_map_size-1];
+		children_count += std::numeric_limits<character_t>::max() - this->zeros_map[(this->zeros_map_half_size*2)-1];
 		
 
 
@@ -284,8 +288,8 @@ public:
 													e.g.  [5,x], make 4 zero  -> [4,x] (just change 1)
 												else
 													e.g.  [5,x], make 3 zero  -> [3,3] [5,x] (insert 2)
-										  2) edge-case, 1 exists after zeros_map[zeros_map_size-1]
-												if (letter == zeros_map[zeros_map_size-1]+1)
+										  2) edge-case, 1 exists after zeros_map[(zeros_map_half_size*2)-1]
+												if (letter == zeros_map[(zeros_map_half_size*2)-1]+1)
 												   e.g.  [x,97], make 98 zero -> [x,98] (just change 1)
 												else
 												   e.g.  [x,97], make 99 zero -> [x,97] [99,99] (insert 2)
@@ -304,20 +308,20 @@ public:
 			else
 			{
 				character_t *new_zeros;
-				new_zeros = new character_t[this->zeros_map_size+2];
+				new_zeros = new character_t[(this->zeros_map_half_size*2)+2];
 
 				new_zeros[0] = letter;
 				new_zeros[1] = letter;
 
-				for (uint32_t i = 0; i < this->zeros_map_size; i++)
+				for (uint32_t i = 0; i < (this->zeros_map_half_size*2); i++)
 					new_zeros[i+2] = this->zeros_map[i];
 
 				delete[] this->zeros_map;
 				this->zeros_map = new_zeros;
-				this->zeros_map_size += 2;
+				this->zeros_map_half_size += 1;
 			}
 		}
-		else if (index_to_change_zeros == this->zeros_map_size-1)
+		else if (index_to_change_zeros == (this->zeros_map_half_size*2)-1)
 		{
 			if (letter == this->zeros_map[index_to_change_zeros] + 1)
 			{
@@ -326,9 +330,9 @@ public:
 			else
 			{
 				character_t *new_zeros;
-				new_zeros = new character_t[this->zeros_map_size+2];
+				new_zeros = new character_t[(this->zeros_map_half_size*2)+2];
 
-				for (uint32_t i = 0; i < this->zeros_map_size; i++)
+				for (uint32_t i = 0; i < (this->zeros_map_half_size*2); i++)
 					new_zeros[i] = this->zeros_map[i];
 
 				new_zeros[index_to_change_zeros+1] = letter;
@@ -336,7 +340,7 @@ public:
 
 				delete[] this->zeros_map;
 				this->zeros_map = new_zeros;
-				this->zeros_map_size += 2;
+				this->zeros_map_half_size += 1;
 			}
 		}
 		// normal cases
@@ -345,17 +349,17 @@ public:
 			this->zeros_map[index_to_change_zeros] = this->zeros_map[index_to_change_zeros+2];
 
 			character_t *new_zeros;
-			new_zeros = new character_t[this->zeros_map_size-2];
+			new_zeros = new character_t[(this->zeros_map_half_size*2)-2];
 
 			for (uint32_t i = 0; i < index_to_change_zeros+1; i++)
 				new_zeros[i] = this->zeros_map[i];
 
-			for (uint32_t i = index_to_change_zeros+3; i < this->zeros_map_size; i++)
+			for (uint32_t i = index_to_change_zeros+3; i < (this->zeros_map_half_size*2); i++)
 				new_zeros[i-2] = this->zeros_map[i];
 
 			delete[] this->zeros_map;
 			this->zeros_map = new_zeros;
-			this->zeros_map_size -= 2;
+			this->zeros_map_half_size -= 1;
 		}
 		else if ( (this->zeros_map[index_to_change_zeros]+1 == letter) )
 		{
@@ -368,7 +372,7 @@ public:
 		else
 		{
 			character_t *new_zeros;
-			new_zeros = new character_t[this->zeros_map_size+2];
+			new_zeros = new character_t[(this->zeros_map_half_size*2)+2];
 
 			for (uint32_t i = 0; i < index_to_change_zeros+1; i++)
 				new_zeros[i] = this->zeros_map[i];
@@ -376,12 +380,12 @@ public:
 			new_zeros[index_to_change_zeros+1] = letter;
 			new_zeros[index_to_change_zeros+2] = letter;
 
-			for (uint32_t i = index_to_change_zeros+1; i < this->zeros_map_size; i++)
+			for (uint32_t i = index_to_change_zeros+1; i < (this->zeros_map_half_size*2); i++)
 				new_zeros[i+2] = this->zeros_map[i];
 
 			delete[] this->zeros_map;
 			this->zeros_map = new_zeros;
-			this->zeros_map_size += 2;
+			this->zeros_map_half_size += 1;
 		}
 	}
 

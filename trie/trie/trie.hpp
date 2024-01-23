@@ -34,7 +34,7 @@ private:
 public:
 	Trie( std::string dictionary_name)
 	{
-		// set up head node, 0 entries, dictionary name, saving_changes setting
+		// 0 entries, dictionary name, saving_changes setting
 		uint32_t bytes;
 		if (std::is_same<character_t, uint8_t>::value)
 			bytes = 1;
@@ -49,12 +49,27 @@ public:
 		this->saving_changes = false;
 
 		// open dictionary file to read it
+		uint32_t character_size;
 		FILE* file = fopen(this->dictionary_name.c_str(), "rb");
 		if (file == NULL)
-			throw ErrorOpeningDictionaryException(this->dictionary_name);
+		{
+			file = fopen(this->dictionary_name.c_str(), "wb");
+			if (file == NULL)
+				throw ErrorOpeningDictionaryException(this->dictionary_name);
+
+			character_size = sizeof(character_t);
+			fwrite( &character_size, sizeof(uint32_t), 1, file);
+
+			fwrite( &this->entry_count, sizeof(uint32_t), 1, file);
+
+			fclose(file);
+
+			file = fopen(this->dictionary_name.c_str(), "rb");
+			if (file == NULL)
+				throw ErrorOpeningDictionaryException(this->dictionary_name);
+		}
 
 		// read character size for this dictionary
-		uint32_t character_size;
 		fread( &character_size, sizeof(uint32_t), 1, file);
 		if (character_size != bytes)
 		{
@@ -158,7 +173,7 @@ public:
 		uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
 		for (character_t letter = 0; letter < alphabet_size; letter++)
 		{
-			if ( (next_zeros_group < to_destroy->zeros_map_size) && (letter == to_destroy->zeros_map[next_zeros_group]) )
+			if ( (next_zeros_group < (to_destroy->zeros_map_half_size*2)) && (letter == to_destroy->zeros_map[next_zeros_group]) )
 			{
 				letter = to_destroy->zeros_map[next_zeros_group+1];
 				if (letter == (alphabet_size-1))
@@ -181,7 +196,11 @@ public:
 	}
 
 	/* return true if the trie is empty (0 (word -> translations) paris saved) */
-	bool is_empty();
+	bool is_empty()
+	{
+		return (this->head->children == NULL);
+		// return (this->head->get_children_count() == 0);
+	}
 
 	/* Search a word in trie. Return a pointer to the saved translation
 		Returns NULL in case the word is not found */
