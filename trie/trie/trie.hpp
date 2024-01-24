@@ -9,7 +9,6 @@
 #include <type_traits>
 
 #include "trie/exceptions.hpp"
-#include "trie/extended_character_functions.hpp"
 #include "trie/trie_node.hpp"
 
 namespace trie
@@ -175,15 +174,15 @@ public:
 		// append letter of path to current word
 		current_word.insert(current_word.end(), letter_to_append.begin(), letter_to_append.end());
 
-		if ( (this->saving_changes) && (to_destroy->translation != NULL) )
+		if ( (this->saving_changes) && (to_destroy->get_translation() != NULL) )
 		{
 			// write word and translation in dictionary file
 			uint32_t word_size = current_word.size();
 			fwrite( &word_size, sizeof(uint32_t), 1, file);
 			fwrite( current_word.data(), sizeof(character_t), current_word.size(), file);
-			word_size = strlen(to_destroy->translation);
+			word_size = strlen(to_destroy->get_translation());
 			fwrite( &word_size, sizeof(uint32_t), 1, file);
-			fwrite( to_destroy->translation, sizeof(character_t), strlen(to_destroy->translation), file);
+			fwrite( to_destroy->get_translation(), sizeof(character_t), strlen(to_destroy->get_translation()), file);
 		}
 
 		// read zeros map
@@ -193,9 +192,9 @@ public:
 		uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
 		for (character_t letter = 0; letter < alphabet_size; letter++)
 		{
-			if ( (next_zeros_group < (to_destroy->zeros_map_half_size*2)) && (letter == to_destroy->zeros_map[next_zeros_group]) )
+			if ( (next_zeros_group < to_destroy->get_zeros_map_half_size()*2) && (letter == *(to_destroy->get_zeros_map() + next_zeros_group)) )
 			{
-				letter = to_destroy->zeros_map[next_zeros_group+1];
+				letter = *(to_destroy->get_zeros_map() + (next_zeros_group+1));
 				if (letter == (alphabet_size-1))
 				{
 					break;
@@ -204,22 +203,21 @@ public:
 				next_zeros_group += 2;
 			}
 
-			this->destroy_trie_node( to_destroy->children[next_child++], current_word, std::vector<character_t>( 1, letter), file);
+			this->destroy_trie_node( *(to_destroy->get_children() + (next_child++)), current_word, std::vector<character_t>( 1, letter), file);
 		}
 
 		// at this point, you know that all children of this node are deleted
 		// so, delete current node
-		delete[] to_destroy->translation;
-		delete[] to_destroy->zeros_map;
-		delete[] to_destroy->children;
+		delete[] to_destroy->get_translation();
+		delete[] to_destroy->get_zeros_map();
+		delete[] to_destroy->get_children();
 		delete to_destroy;
 	}
 
 	/* return true if the trie is empty (0 (word -> translations) paris saved) */
 	bool is_empty()
 	{
-		return (this->head->children == NULL);
-		// return (this->head->get_children_count() == 0);
+		return this->head->is_empty();
 	}
 
 	/* Search a word in trie. Return a pointer to the saved translation
@@ -241,10 +239,10 @@ public:
 		}
 
 		// report an error if word given is not saved or it doesn't have a translation
-		if ( (strlen(word) != current_word_position) || previous->translation == NULL)
+		if ( (strlen(word) != current_word_position) || previous->get_translation() == NULL)
 			return NULL;
 
-		return previous->translation;
+		return previous->get_translation();
 	}
 
 	/* Add a word in the trie. Return a pointer to the saved translation
@@ -272,16 +270,15 @@ public:
 		}
 
 		// reached the end of the given word. Check if translation exists already and insert.
-		if (previous->translation != NULL)
+		if (previous->get_translation() != NULL)
 			return NULL;
 		
 		// add word with translation, increase entry_count
-		previous->translation = new character_t[strlen(translation) + 1];
-		strcpy( previous->translation, translation);
+		previous->set_translation(translation);
 
 		this->entry_count++;
 
-		return previous->translation;
+		return previous->get_translation();
 	}
 
 	/* Delete a word from trie. Return a pointer to the deleted translation.
@@ -312,16 +309,15 @@ public:
 		}
 
 		// report an error if word given is not saved or it doesn't have a translation
-		if ( (strlen(word) != current_word_position) || previous->translation == NULL)
+		if ( (strlen(word) != current_word_position) || previous->get_translation() == NULL)
 			return NULL;
 
 		// at this point, you will surely have a successful deletion
-		character_t* toReturn = new character_t[strlen(previous->translation) + 1];
-		strcpy( toReturn, previous->translation);
+		character_t* toReturn = new character_t[strlen(previous->get_translation()) + 1];
+		strcpy( toReturn, previous->get_translation());
 
 		// delete translation
-		delete[] previous->translation;
-		previous->translation = NULL;
+		previous->set_translation(NULL);
 
 		// loop through the delete path in reverse order (same as looping through the word letters)
 		for (int i=strlen(word); i > -1; i--)
@@ -333,9 +329,9 @@ public:
 			   ,then delete it and inform its parent about the deletion
 			   ,otherwise, end of deletion process */
 
-			if ( (delete_path[i]->children == NULL) && (delete_path[i]->translation == NULL) && (delete_path[i] != this->head) )
+			if ( (delete_path[i]->is_empty()) && (delete_path[i]->get_translation() == NULL) && (delete_path[i] != this->head) )
 			{
-				delete[] delete_path[i]->zeros_map;
+				delete[] delete_path[i]->get_zeros_map();
 				delete delete_path[i];
 				delete_path[i-1]->set_child_null( word[i-1] );
 			}

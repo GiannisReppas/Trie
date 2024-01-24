@@ -4,13 +4,15 @@
 #include <stdint.h>
 #include <limits>
 
+#include "trie/extended_character_functions.hpp"
+
 namespace trie
 {
 
 template <class character_t> 
 class TrieNode
 {
-public:
+private:
 	/* variable size ( 2 to ((ALPHABET_SIZE/2) * 2) * sizeof(character_t) )
 		worst case when bits have the form of 01010101... zeros_map add 2 elements for
 		each 0 bit
@@ -31,6 +33,7 @@ public:
 	 char32_t always 4 bytes */
 	character_t *translation;
 
+public:
 	TrieNode()
 	{
 		// 2 elements to depict a full zero group for all bits
@@ -65,6 +68,46 @@ public:
 		children_count += std::numeric_limits<character_t>::max() - this->zeros_map[(this->zeros_map_half_size*2)-1];
 
 		return children_count;
+	}
+
+	bool is_empty()
+	{
+		return (this->children == NULL);
+		// reutrn (this->get_children_count == 0);
+	}
+
+	character_t* get_translation()
+	{
+		return this->translation;
+	}
+
+	character_t get_zeros_map_half_size()
+	{
+		return this->zeros_map_half_size*2;
+	}
+
+	character_t* get_zeros_map()
+	{
+		return this->zeros_map;
+	}
+
+	TrieNode** get_children()
+	{
+		return this->children;
+	}
+
+	void set_translation(const character_t* translation)
+	{
+		if (this->translation != NULL)
+			delete[] this->translation;
+
+		if (translation != NULL)
+		{
+			this->translation = new character_t[strlen(translation) + 1];
+			strcpy( this->translation, translation);
+		}
+		else
+			translation = NULL;
 	}
 
 	/* returns a Trienode pointer following the path of the argument letter, if there exists one */
