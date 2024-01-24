@@ -32,6 +32,26 @@ private:
 	bool saving_changes;
 
 public:
+	Trie()
+	{
+		// 0 entries, dictionary name, saving_changes setting
+		uint32_t bytes;
+		if (std::is_same<character_t, uint8_t>::value)
+			bytes = 1;
+		else if (std::is_same<character_t, uint16_t>::value)
+			bytes = 2;
+		else if (std::is_same<character_t, uint32_t>::value)
+			bytes = 4;
+		else
+			throw ErrorCreatingDictionaryException();
+		this->entry_count = 0;
+		this->dictionary_name = "";
+		this->saving_changes = false;
+
+		// set up head node
+		this->head = new TrieNode<character_t>();
+	}
+
 	Trie( std::string dictionary_name)
 	{
 		// 0 entries, dictionary name, saving_changes setting
@@ -46,7 +66,7 @@ public:
 			throw ErrorCreatingDictionaryException();
 		this->entry_count = 0;
 		this->dictionary_name = dictionary_name;
-		this->saving_changes = false;
+		this->saving_changes = true;
 
 		// open dictionary file to read it
 		uint32_t character_size;
@@ -340,11 +360,14 @@ public:
 		return this->entry_count;
 	}
 
-	/* set if the trie will be saved in the file "dictionary_name" at destruction
-		default: false */
+	/* Set if the trie will be saved in the file "dictionary_name" at destruction
+		It is impossible to have saving_changes true without a dictionary file */
 	void set_saving_changes(bool decision)
 	{
-		this->saving_changes = decision;
+		if ( (this->dictionary_name == "") && (decision == true) )
+			return;
+		else
+			this->saving_changes = decision;
 	}
 
 	/* functions used to insert and delete pairs of (word,translation)

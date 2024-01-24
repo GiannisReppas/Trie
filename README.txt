@@ -17,7 +17,9 @@ Future plans:
 1) allow more character sizes (diff. than 1/2/4 bytes)
 2) Use a similar data-structure for the translation strings
 3) More effective load-save operations on disk
-4) python bindings
-5) switch between RLE and normal bitmapping when it is most optimal
-6) add real alphabet - integer mapping outside of the library
-7) add prefix, etc. functionality
+4) switch between RLE and normal bitmapping when it is most optimal
+5) add prefix, etc. functionality
+6) python bindings
+7) add real alphabet - integer mapping outside of the library
+
+trie copy constructor

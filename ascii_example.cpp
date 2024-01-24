@@ -11,7 +11,7 @@ int main(void)
 {
 	// load file in memory
 	trie::Trie<uint8_t>* t;
-	t = new trie::Trie<uint8_t>( "trie_ascii" );
+	t = new trie::Trie<uint8_t>();
 
 	// read input from command line
 	std::string input, input1, input2;
@@ -129,8 +129,8 @@ int main(void)
 			}
 			else if (!input.compare("\\e"))
 			{
-				if (!input1.compare("1"))
-					t->set_saving_changes(true);
+				if (!input1.compare("0"))
+					t->set_saving_changes(false);
 				break;
 			}
 		}
