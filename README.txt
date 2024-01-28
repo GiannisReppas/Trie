@@ -21,5 +21,4 @@ Future plans:
 5) add prefix, etc. functionality
 6) python bindings
 7) add real alphabet - integer mapping outside of the library
-
-trie copy constructor
+8) copy constructors
