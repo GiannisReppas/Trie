@@ -14,7 +14,7 @@
 namespace trie
 {
 
-template <class character_t> 
+template <class character_t>
 class Trie
 {
 private:
@@ -35,22 +35,25 @@ public:
 	Trie( std::string dictionary_name);
 	~Trie();
 	void destroy_trie_node( TrieNode<character_t> *to_destroy, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
-	
-	/* return true if the trie is empty (0 (word -> translations) paris saved) */
+
+	/* get information about number of saved words */
 	bool is_empty();
+	uint32_t get_entry_count();
 
 	/* index functions */
 	character_t* search_word( const character_t* word);
 	character_t* add_word( const character_t* word, const character_t* translation);
 	character_t* delete_word( const character_t* word);
 
-	uint32_t get_entry_count();
+	/* choose if trie will save changes in file upon destruction */
 	void set_saving_changes(bool decision);
+
+	/* reading/deleting input from csv */
 	void insert_from_csv( std::string filename);
 	void delete_from_csv( std::string filename);
 };
 
-template <class character_t> 
+template <class character_t>
 Trie<character_t>::Trie()
 {
 	// 0 entries, dictionary name, saving_changes setting
@@ -71,7 +74,7 @@ Trie<character_t>::Trie()
 	this->head = new TrieNode<character_t>();
 }
 
-template <class character_t> 
+template <class character_t>
 Trie<character_t>::Trie( std::string dictionary_name)
 {
 	// 0 entries, dictionary name, saving_changes setting
@@ -154,7 +157,7 @@ Trie<character_t>::Trie( std::string dictionary_name)
 	fclose(file);
 }
 
-template <class character_t> 
+template <class character_t>
 Trie<character_t>::~Trie()
 {
 	FILE* file;
@@ -191,7 +194,7 @@ Trie<character_t>::~Trie()
 	}
 }
 
-template <class character_t> 
+template <class character_t>
 void Trie<character_t>::destroy_trie_node( TrieNode<character_t> *to_destroy, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file)
 {
 	// append letter of path to current word
@@ -231,9 +234,6 @@ void Trie<character_t>::destroy_trie_node( TrieNode<character_t> *to_destroy, st
 
 	// at this point, you know that all children of this node are deleted
 	// so, delete current node
-	delete[] to_destroy->get_translation();
-	delete[] to_destroy->get_zeros_map();
-	delete[] to_destroy->get_children();
 	delete to_destroy;
 }
 
@@ -297,7 +297,7 @@ character_t* Trie<character_t>::add_word( const character_t* word, const charact
 	// reached the end of the given word. Check if translation exists already and insert.
 	if (previous->get_translation() != NULL)
 		return NULL;
-		
+
 	// add word with translation, increase entry_count
 	previous->set_translation(translation);
 
@@ -357,7 +357,6 @@ character_t* Trie<character_t>::delete_word( const character_t* word)
 
 		if ( (delete_path[i]->is_empty()) && (delete_path[i]->get_translation() == NULL) && (delete_path[i] != this->head) )
 		{
-			delete[] delete_path[i]->get_zeros_map();
 			delete delete_path[i];
 			delete_path[i-1]->set_child_null( word[i-1] );
 		}

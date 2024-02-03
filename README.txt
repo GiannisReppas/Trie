@@ -22,3 +22,4 @@ Future plans:
 6) python bindings
 7) add real alphabet - integer mapping outside of the library
 8) copy constructors
+9) tests

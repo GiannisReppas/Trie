@@ -24,7 +24,8 @@ private:
 	character_t zeros_map_half_size;
 
 	/* variable size (0 to ALPHABET_SIZE*sizeof(pointer)) bytes
-	 pointer usually 8 bytes */
+	 pointer usually 8 bytes
+	 We don't keep its size to save space. We get the size by reading zeros_map */
 	class TrieNode **children;
 
 	/* variable size, 0 to translation_size*sizeof(character_size)+sizeof(character_size) bytes
@@ -77,6 +78,9 @@ TrieNode<character_t>::TrieNode()
 template <class character_t> 
 TrieNode<character_t>::~TrieNode()
 {
+	delete[] this->translation;
+	delete[] this->zeros_map;
+	delete[] this->children;
 }
 
 template <class character_t> 
@@ -131,16 +135,18 @@ TrieNode<character_t>** TrieNode<character_t>::get_children()
 template <class character_t>
 void TrieNode<character_t>::set_translation(const character_t* translation)
 {
+	// delete old value
 	if (this->translation != NULL)
 		delete[] this->translation;
 
+	// set new value
 	if (translation != NULL)
 	{
 		this->translation = new character_t[strlen(translation) + 1];
 		strcpy( this->translation, translation);
 	}
 	else
-		translation = NULL;
+		this->translation = NULL;
 }
 
 /* returns a Trienode pointer following the path of the argument letter, if there exists one */
