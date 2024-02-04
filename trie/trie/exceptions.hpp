@@ -6,7 +6,7 @@
 namespace trie
 {
 
-class ErrorCreatingDictionaryException : std::exception
+class ErrorCreatingTrieException : std::exception
 {
 public:
 	std::string info()

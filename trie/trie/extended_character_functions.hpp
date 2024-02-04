@@ -6,6 +6,8 @@
 namespace trie
 {
 
+/* number that should be counted as the end of a series of integers
+	normally, it is 0, like in strings */
 uint32_t end_of_string = 0;
 
 /* reports number of elements in the array until the first ::trie::end_of_string */

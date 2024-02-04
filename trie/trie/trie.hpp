@@ -32,19 +32,31 @@ public:
 	Trie( std::string dictionary_name);
 	~Trie();
 
-	/* get information about number of saved words */
+	/* return true if Trie has 0 translations saved */
 	bool is_empty();
+
+	/* return number of saved translations */
 	uint32_t get_entry_count();
 
-	/* index functions */
+	/* search for the translation of a word in the Trie
+		return a pointer to the translation of the word
+		return NULL if the word given doesn't exist in the Trie */
 	character_t* search_word( const character_t* word);
+
+	/* add a new word with its translation in the Trie
+		return false if the word given already exists in the Trie */
 	bool add_word( const character_t* word, const character_t* translation);
+
+	/* delete a word from the Trie with its translation
+		return false if the word given doesn't exist in the Trie */
 	bool delete_word( const character_t* word);
 
-	/* write current information of trie in dictionary_file */
+	/* write current information of trie in the binary dictionary file */
 	void save_changes();
-
-	/* reading/deleting input from csv */
+	
+	/* functions used to insert and delete pairs of (word,translation)
+		insert can be used to import an already existing dictionary .csv file
+		delete is used mainly for debugging and ignored the provided translation */
 	void insert_from_csv( std::string filename);
 	void delete_from_csv( std::string filename);
 
@@ -53,7 +65,7 @@ public:
 template <class character_t>
 Trie<character_t>::Trie()
 {
-	// 0 entries, dictionary name
+	// check if the type given is valid for the template class
 	uint32_t bytes;
 	if (std::is_same<character_t, uint8_t>::value)
 		bytes = 1;
@@ -62,7 +74,9 @@ Trie<character_t>::Trie()
 	else if (std::is_same<character_t, uint32_t>::value)
 		bytes = 4;
 	else
-		throw ErrorCreatingDictionaryException();
+		throw ErrorCreatingTrieException();
+
+	// 0 entries, dictionary name empty
 	this->entry_count = 0;
 	this->dictionary_name = "";
 
@@ -73,7 +87,7 @@ Trie<character_t>::Trie()
 template <class character_t>
 Trie<character_t>::Trie( std::string dictionary_name)
 {
-	// 0 entries, dictionary name
+	// check if the type given is valid for the template class
 	uint32_t bytes;
 	if (std::is_same<character_t, uint8_t>::value)
 		bytes = 1;
@@ -82,7 +96,9 @@ Trie<character_t>::Trie( std::string dictionary_name)
 	else if (std::is_same<character_t, uint32_t>::value)
 		bytes = 4;
 	else
-		throw ErrorCreatingDictionaryException();
+		throw ErrorCreatingTrieException();
+
+	// 0 entries, dictionary name
 	this->entry_count = 0;
 	this->dictionary_name = dictionary_name;
 
@@ -165,17 +181,14 @@ bool Trie<character_t>::is_empty()
 	return this->head->is_empty();
 }
 
-/* Search a word in trie. Return a pointer to the saved translation
-	Returns NULL in case the word is not found */
 template <class character_t>
 character_t* Trie<character_t>::search_word( const character_t* word)
 {
+	// read existing Trie until you reach unsaved part of the word
+	// for a successful search, we should not have an unsaved part
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
 	uint32_t current_word_position = -1;
-
-	// read existing Trie until you reach unsaved part of the word
-	// for a successful search, we should not have an unsaved part
 	while (current != NULL)
 	{
 		++current_word_position;
@@ -185,22 +198,19 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 	}
 
 	// report an error if word given is not saved or it doesn't have a translation
-	if ( (strlen(word) != current_word_position) || previous->get_translation() == NULL)
+	if ( (strlen(word) != current_word_position) || (previous->get_translation() == NULL) )
 		return NULL;
 
 	return previous->get_translation();
 }
 
-/* Add a word in the trie. Return true in case of a correct insertion
-	Returns false in case the word already has a saved translation */
 template <class character_t>
 bool Trie<character_t>::add_word( const character_t* word, const character_t* translation)
 {
+	// read existing Trie until you reach unsaved part of the word
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
 	uint32_t current_word_position = -1;
-
-	// read existing Trie until you reach unsaved part of the word
 	while (current != NULL)
 	{
 		++current_word_position;
@@ -222,15 +232,11 @@ bool Trie<character_t>::add_word( const character_t* word, const character_t* tr
 
 	// add word with translation, increase entry_count
 	previous->set_translation(translation);
-
 	this->entry_count++;
 
 	return true;
 }
 
-/* Delete a word from trie. Return a pointer to the deleted translation.
-	Returned translation should be freed by the caller
-	Returns NULL in case the word is not found */
 template <class character_t>
 bool Trie<character_t>::delete_word( const character_t* word)
 {
@@ -240,12 +246,11 @@ bool Trie<character_t>::delete_word( const character_t* word)
 	for (uint32_t i=0; i < strlen(word); i++)
 		delete_path[i] = NULL;
 
+	// read existing Trie and update the delete path until you reach unsaved part of the word
+	// for a successful deletion, we should not have an unsaved part
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
 	uint32_t current_word_position = -1;
-
-	// read existing Trie and update the delete path until you reach unsaved part of the word
-	// for a successful deletion, we should not have an unsaved part
 	while (current != NULL)
 	{
 		++current_word_position;
@@ -263,17 +268,16 @@ bool Trie<character_t>::delete_word( const character_t* word)
 	// at this point, you will surely have a successful deletion, delete translation
 	previous->set_translation(NULL);
 
-	// loop through the delete path in reverse order (same as looping through the word letters)
+	// loop through the delete path in reverse order
 	for (int i=strlen(word); i > -1; i--)
 	{
-		/* if the node is in the delete path and
-			1) doesn't have children (empty)
-			2) doesn't have a translation
-			3) is not the head of the trie
+		/* if current node in the delete path
+			1) doesn't have children and translation (empty)
+			2) is not the head of the trie
 		   ,then delete it and inform its parent about the deletion
 		   ,otherwise, end of deletion process */
 
-		if ( (delete_path[i]->is_empty()) && (delete_path[i]->get_translation() == NULL) && (delete_path[i] != this->head) )
+		if ( (delete_path[i]->is_empty()) && (delete_path[i] != this->head) )
 		{
 			delete delete_path[i];
 			delete_path[i-1]->set_child_null( word[i-1] );
@@ -293,15 +297,12 @@ bool Trie<character_t>::delete_word( const character_t* word)
 	return true;
 }
 
-/* Return number of (word -> translation) pairs saved currently in the trie */
 template <class character_t>
 uint32_t Trie<character_t>::get_entry_count()
 {
 	return this->entry_count;
 }
 
-/* Set changes in the file "dictionary_name" at destruction
-	It is impossible to have save changes without a dictionary file */
 template <class character_t>
 void Trie<character_t>::save_changes()
 {
@@ -326,13 +327,11 @@ void Trie<character_t>::save_changes()
 	fclose(file);
 }
 
-/* functions used to insert and delete pairs of (word,translation)
-	insert can be used to import an already existing dictionary .csv file
-	delete is used mainly for debugging and ignored the provided translation */
 template <class character_t>
 void Trie<character_t>::insert_from_csv( std::string filename)
 {
 	/* the csv file needs to have the format: word,translation
+		lines without a comma character are ignored
 		in case of multiple commas, the 1st one is chosen as a separator */
 
 	// open the csv file
@@ -371,6 +370,7 @@ template <class character_t>
 void Trie<character_t>::delete_from_csv( std::string filename)
 {
 	/* the csv file needs to have the format: word,translation
+		lines without a comma character are ignored
 		in case of multiple commas, the 1st one is chosen as a separator */
 
 	// open the csv file
@@ -381,7 +381,7 @@ void Trie<character_t>::delete_from_csv( std::string filename)
 	// read file line-by-line
 	std::string word, translation;
 	std::string line;
-	character_t *arg1, *arg2;
+	character_t *arg1;
 	while (std::getline(cvs_file, line))
 	{
 		auto comma_pos = line.find(",");
@@ -390,7 +390,6 @@ void Trie<character_t>::delete_from_csv( std::string filename)
 		if (comma_pos != line.npos)
 		{
 			word = line.substr( 0, comma_pos);
-			//translation = line.substr( comma_pos+1, line.size()-comma_pos);
 
 			// delete tuple
 			arg1 = str_to_c<character_t>(word);
