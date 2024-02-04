@@ -27,14 +27,10 @@ private:
 	/* number of (word -> translation) pairs in the Trie */
 	uint32_t entry_count;
 
-	/* if its true, then the trie will be saved in disk (file) at destruction */
-	bool saving_changes;
-
 public:
 	Trie();
 	Trie( std::string dictionary_name);
 	~Trie();
-	void destroy_trie_node( TrieNode<character_t> *to_destroy, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
 
 	/* get information about number of saved words */
 	bool is_empty();
@@ -45,18 +41,19 @@ public:
 	character_t* add_word( const character_t* word, const character_t* translation);
 	character_t* delete_word( const character_t* word);
 
-	/* choose if trie will save changes in file upon destruction */
-	void set_saving_changes(bool decision);
+	/* write current information of trie in dictionary_file */
+	void save_changes();
 
 	/* reading/deleting input from csv */
 	void insert_from_csv( std::string filename);
 	void delete_from_csv( std::string filename);
+
 };
 
 template <class character_t>
 Trie<character_t>::Trie()
 {
-	// 0 entries, dictionary name, saving_changes setting
+	// 0 entries, dictionary name
 	uint32_t bytes;
 	if (std::is_same<character_t, uint8_t>::value)
 		bytes = 1;
@@ -68,7 +65,6 @@ Trie<character_t>::Trie()
 		throw ErrorCreatingDictionaryException();
 	this->entry_count = 0;
 	this->dictionary_name = "";
-	this->saving_changes = false;
 
 	// set up head node
 	this->head = new TrieNode<character_t>();
@@ -77,7 +73,7 @@ Trie<character_t>::Trie()
 template <class character_t>
 Trie<character_t>::Trie( std::string dictionary_name)
 {
-	// 0 entries, dictionary name, saving_changes setting
+	// 0 entries, dictionary name
 	uint32_t bytes;
 	if (std::is_same<character_t, uint8_t>::value)
 		bytes = 1;
@@ -89,7 +85,6 @@ Trie<character_t>::Trie( std::string dictionary_name)
 		throw ErrorCreatingDictionaryException();
 	this->entry_count = 0;
 	this->dictionary_name = dictionary_name;
-	this->saving_changes = true;
 
 	// open dictionary file to read it
 	uint32_t character_size;
@@ -160,81 +155,8 @@ Trie<character_t>::Trie( std::string dictionary_name)
 template <class character_t>
 Trie<character_t>::~Trie()
 {
-	FILE* file;
-
-	if (this->saving_changes)
-	{
-		try
-		{
-			// open dictionary file to write from scratch
-			file = fopen( this->dictionary_name.c_str(), "wb");
-			if (file == NULL)
-				throw ErrorOpeningDictionaryException(this->dictionary_name);
-
-			// write character size and total entries for this dictionary
-			uint32_t character_size = sizeof(character_t);
-			fwrite( &character_size, sizeof(uint32_t), 1, file);
-
-			fwrite( &this->entry_count, sizeof(uint32_t), 1, file);
-		}
-		catch (ErrorOpeningDictionaryException eode)
-		{
-			printf("Error opening dictionary file to write changes. Changes will not be saved.\n");
-			this->saving_changes = false;
-		}
-	}
-
-	//  start deleting nodes, recursively
-	this->destroy_trie_node( this->head, std::vector<character_t>(), std::vector<character_t>(), file);
-
-	if (this->saving_changes)
-	{
-		// close dictionary file
-		fclose(file);
-	}
-}
-
-template <class character_t>
-void Trie<character_t>::destroy_trie_node( TrieNode<character_t> *to_destroy, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file)
-{
-	// append letter of path to current word
-	current_word.insert(current_word.end(), letter_to_append.begin(), letter_to_append.end());
-
-	if ( (this->saving_changes) && (to_destroy->get_translation() != NULL) )
-	{
-		// write word and translation in dictionary file
-		uint32_t word_size = current_word.size();
-		fwrite( &word_size, sizeof(uint32_t), 1, file);
-		fwrite( current_word.data(), sizeof(character_t), current_word.size(), file);
-		word_size = strlen(to_destroy->get_translation());
-		fwrite( &word_size, sizeof(uint32_t), 1, file);
-		fwrite( to_destroy->get_translation(), sizeof(character_t), strlen(to_destroy->get_translation()), file);
-	}
-
-	// read zeros map
-	// for every active letter that you find, call recursive destruction function
-	character_t next_child = 0;
-	character_t next_zeros_group = 0;
-	uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
-	for (character_t letter = 0; letter < alphabet_size; letter++)
-	{
-		if ( (next_zeros_group < to_destroy->get_zeros_map_half_size()*2) && (letter == *(to_destroy->get_zeros_map() + next_zeros_group)) )
-		{
-			letter = *(to_destroy->get_zeros_map() + (next_zeros_group+1));
-			if (letter == (alphabet_size-1))
-			{
-				break;
-			}
-			letter++;
-			next_zeros_group += 2;
-		}
-
-		this->destroy_trie_node( *(to_destroy->get_children() + (next_child++)), current_word, std::vector<character_t>( 1, letter), file);
-	}
-
-	// at this point, you know that all children of this node are deleted
-	// so, delete current node
-	delete to_destroy;
+	//  start deleting nodes from head, recursively
+	delete this->head;
 }
 
 template <class character_t>
@@ -382,15 +304,30 @@ uint32_t Trie<character_t>::get_entry_count()
 	return this->entry_count;
 }
 
-/* Set if the trie will be saved in the file "dictionary_name" at destruction
-	It is impossible to have saving_changes true without a dictionary file */
+/* Set changes in the file "dictionary_name" at destruction
+	It is impossible to have save changes without a dictionary file */
 template <class character_t>
-void Trie<character_t>::set_saving_changes(bool decision)
+void Trie<character_t>::save_changes()
 {
-	if ( (this->dictionary_name == "") && (decision == true) )
+	if (this->dictionary_name == "")
 		return;
-	else
-		this->saving_changes = decision;
+
+	// open dictionary file to write from scratch
+	FILE* file = fopen( this->dictionary_name.c_str(), "wb");
+	if (file == NULL)
+		throw ErrorOpeningDictionaryException(this->dictionary_name);
+
+	// write character size and total entries for this dictionary
+	uint32_t character_size = sizeof(character_t);
+	fwrite( &character_size, sizeof(uint32_t), 1, file);
+
+	fwrite( &this->entry_count, sizeof(uint32_t), 1, file);
+
+	// start saving tuples, recursively
+	this->head->save_subtrie( std::vector<character_t>(), std::vector<character_t>(), file);
+
+	// close dictionary file
+	fclose(file);
 }
 
 /* functions used to insert and delete pairs of (word,translation)

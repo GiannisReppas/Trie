@@ -40,13 +40,11 @@ public:
 
 	bool is_empty();
 
-	/* getters */
-	uint32_t get_children_count(); /* returns size of array children */
-	character_t* get_translation();
-	character_t get_zeros_map_half_size();
-	character_t* get_zeros_map();
-	TrieNode** get_children();
+	/* returns size of array children */
+	uint32_t get_children_count();
 
+	/* manage node translation */
+	character_t* get_translation();
 	void set_translation(const character_t* translation);
 
 	/* returns a Trienode pointer following the path of the argument letter, if there exists one */
@@ -57,6 +55,9 @@ public:
 	/* deletes a Trienode path in current Trienode, updates both zeros_map and children
 		assumes that letter given as argument will always be 1 in current zeros_map */
 	void set_child_null( character_t letter );
+
+	/* write words and their translations in the children of the node to the file pointed by the file pointer */
+	void save_subtrie( std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
 };
 
 template <class character_t> 
@@ -78,6 +79,26 @@ TrieNode<character_t>::TrieNode()
 template <class character_t> 
 TrieNode<character_t>::~TrieNode()
 {
+	character_t next_child = 0;
+	character_t next_zeros_group = 0;
+	uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
+
+	for (character_t letter = 0; letter < alphabet_size; letter++)
+	{
+		if ( (next_zeros_group < this->zeros_map_half_size*2) && (letter == this->zeros_map[next_zeros_group]) )
+		{
+			letter = this->zeros_map[next_zeros_group+1];
+			if (letter == (alphabet_size-1))
+			{
+				break;
+			}
+			letter++;
+			next_zeros_group += 2;
+		}
+
+		delete this->children[next_child++];
+	}
+
 	delete[] this->translation;
 	delete[] this->zeros_map;
 	delete[] this->children;
@@ -105,31 +126,13 @@ template <class character_t>
 bool TrieNode<character_t>::is_empty()
 {
 	return (this->children == NULL);
-	// reutrn (this->get_children_count == 0);
+	// return (this->get_children_count == 0);
 }
 
 template <class character_t>
 character_t* TrieNode<character_t>::get_translation()
 {
 	return this->translation;
-}
-
-template <class character_t>
-character_t TrieNode<character_t>::get_zeros_map_half_size()
-{
-	return this->zeros_map_half_size*2;
-}
-
-template <class character_t>
-character_t* TrieNode<character_t>::get_zeros_map()
-{
-	return this->zeros_map;
-}
-
-template <class character_t>
-TrieNode<character_t>** TrieNode<character_t>::get_children()
-{
-	return this->children;
 }
 
 template <class character_t>
@@ -474,7 +477,47 @@ void TrieNode<character_t>::set_child_null( character_t letter )
 	}
 }
 
+template <class character_t>
+void TrieNode<character_t>::save_subtrie( std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file)
+{
+	// append letter of path to current word
+	current_word.insert(current_word.end(), letter_to_append.begin(), letter_to_append.end());
 
+	// write current translation in dictionary file, if there exists one
+	if ( this->translation != NULL)
+	{
+		// write word and translation in dictionary file
+		uint32_t word_size = current_word.size();
+		fwrite( &word_size, sizeof(uint32_t), 1, file);
+		fwrite( current_word.data(), sizeof(character_t), current_word.size(), file);
+
+		word_size = strlen(this->translation);
+		fwrite( &word_size, sizeof(uint32_t), 1, file);
+		fwrite( this->translation, sizeof(character_t), strlen(this->translation), file);
+	}
+
+	// read zeros map
+	// for every active letter that you find, call recursive saving function
+	character_t next_child = 0;
+	character_t next_zeros_group = 0;
+	uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
+	
+	for (character_t letter = 0; letter < alphabet_size; letter++)
+	{
+		if ( (next_zeros_group < this->zeros_map_half_size*2) && (letter == this->zeros_map[next_zeros_group]) )
+		{
+			letter = this->zeros_map[next_zeros_group+1];
+			if (letter == (alphabet_size-1))
+			{
+				break;
+			}
+			letter++;
+			next_zeros_group += 2;
+		}
+
+		this->children[next_child++]->save_subtrie( current_word, std::vector<character_t>(letter), file);
+	}
+}
 
 }
 

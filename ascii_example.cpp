@@ -26,8 +26,8 @@ int main(void)
 		printf("\\c          ||| get total number of saved translations in Trie\n");
 		printf("\\i filename ||| import csv file of format (word,translation)\n");
 		printf("\\z filename ||| delete csv file of format (word,translation) - translation is ignored, used mainly for debugging\n");
-		printf("\\e 1        ||| exit and save changes\n");
-		printf("\\e 0        ||| exit without saving changes\n");
+		printf("\\w          ||| write current trie information to the dictionary file\n");
+		printf("\\e          ||| exit\n");
 
 		// prepare for next command
 		input.clear();
@@ -127,10 +127,20 @@ int main(void)
 				}
 				printf("\n");
 			}
+			else if (!input.compare("\\w"))
+			{
+				try
+				{
+					t->save_changes();
+				}
+				catch (trie::ErrorOpeningDictionaryException eode)
+				{
+					std::cout << eode.info() << std::endl;
+				}
+				printf("\n");
+			}
 			else if (!input.compare("\\e"))
 			{
-				if (!input1.compare("0"))
-					t->set_saving_changes(false);
 				break;
 			}
 		}
@@ -216,26 +226,6 @@ bool parse_input( std::string& input, std::string& input1, std::string& input2)
 				return false;
 			}
 		}
-		else if (!strings[0].compare("\\e"))
-		{
-			if ((strings.size() == 2) && ((!strings[1].compare("1")) || !strings[1].compare("0")) )
-			{
-				input = "\\e";
-				input1 = strings[1];
-				input2 = "";
-
-				if ( ! ((!input1.compare("0")) || (!input1.compare("1"))) )
-				{
-					printf("Wrong input given\n\n");
-					return false;
-				}
-			}
-			else
-			{
-				printf("Wrong input given\n\n");
-				return false;
-			}
-		}
 		else
 		{
 			printf("Wrong input given\n\n");
@@ -244,9 +234,9 @@ bool parse_input( std::string& input, std::string& input1, std::string& input2)
 	}
 	else
 	{
-		if (!strings[0].compare("\\c"))
+		if ((!strings[0].compare("\\c")) || (!strings[0].compare("\\e")) || (!strings[0].compare("\\w")))
 		{
-			input = "\\c";
+			input = strings[0];
 			input1 = "";
 			input2 = "";
 		}
