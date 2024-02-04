@@ -50,7 +50,7 @@ int main(void)
 				arg1 = trie::str_to_c<uint8_t>( input1 );
 				arg2 = trie::str_to_c<uint8_t>( input2 );
 
-				if ( t->add_word( arg1, arg2 ) != NULL )
+				if ( t->add_word( arg1, arg2 ) )
 					printf("Added word %s with translation %s successfully in Trie\n\n", input1.c_str(), input2.c_str() );
 				else
 					printf("Translation already exists for this word\n\n");
@@ -84,20 +84,12 @@ int main(void)
 
 				arg1 = trie::str_to_c<uint8_t>( input1 );
 
-				arg2 = t->delete_word( arg1);
-
-				if ( arg2 != NULL )
-				{
-					printf("Deleted word %s with translation ", input1.c_str());
-					for (uint32_t i = 0; arg2[i] != ::trie::end_of_string; i++)
-						printf("%lc", arg2[i]);
-					printf(" successfully from Trie\n\n");
-				}
+				if ( t->delete_word( arg1) )
+					printf("Deleted word %s successfully from Trie\n\n", input1.c_str());
 				else
 					printf("%s doesn't exist in this dictionary\n\n", input1.c_str());
 
 				delete[] arg1;
-				delete[] arg2;
 			}
 			else if (!input.compare("\\c"))
 			{

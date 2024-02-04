@@ -38,8 +38,8 @@ public:
 
 	/* index functions */
 	character_t* search_word( const character_t* word);
-	character_t* add_word( const character_t* word, const character_t* translation);
-	character_t* delete_word( const character_t* word);
+	bool add_word( const character_t* word, const character_t* translation);
+	bool delete_word( const character_t* word);
 
 	/* write current information of trie in dictionary_file */
 	void save_changes();
@@ -191,10 +191,10 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 	return previous->get_translation();
 }
 
-/* Add a word in the trie. Return a pointer to the saved translation
-	Returns NULL in case the word already has a saved translation */
+/* Add a word in the trie. Return true in case of a correct insertion
+	Returns false in case the word already has a saved translation */
 template <class character_t>
-character_t* Trie<character_t>::add_word( const character_t* word, const character_t* translation)
+bool Trie<character_t>::add_word( const character_t* word, const character_t* translation)
 {
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
@@ -218,21 +218,21 @@ character_t* Trie<character_t>::add_word( const character_t* word, const charact
 
 	// reached the end of the given word. Check if translation exists already and insert.
 	if (previous->get_translation() != NULL)
-		return NULL;
+		return false;
 
 	// add word with translation, increase entry_count
 	previous->set_translation(translation);
 
 	this->entry_count++;
 
-	return previous->get_translation();
+	return true;
 }
 
 /* Delete a word from trie. Return a pointer to the deleted translation.
 	Returned translation should be freed by the caller
 	Returns NULL in case the word is not found */
 template <class character_t>
-character_t* Trie<character_t>::delete_word( const character_t* word)
+bool Trie<character_t>::delete_word( const character_t* word)
 {
 	// keep track of all the visited nodes while traversing the trie in an array of pointers
 	// they could potentially be deleted in the end
@@ -258,13 +258,9 @@ character_t* Trie<character_t>::delete_word( const character_t* word)
 
 	// report an error if word given is not saved or it doesn't have a translation
 	if ( (strlen(word) != current_word_position) || previous->get_translation() == NULL)
-		return NULL;
+		return false;
 
-	// at this point, you will surely have a successful deletion
-	character_t* toReturn = new character_t[strlen(previous->get_translation()) + 1];
-	strcpy( toReturn, previous->get_translation());
-
-	// delete translation
+	// at this point, you will surely have a successful deletion, delete translation
 	previous->set_translation(NULL);
 
 	// loop through the delete path in reverse order (same as looping through the word letters)
@@ -294,7 +290,7 @@ character_t* Trie<character_t>::delete_word( const character_t* word)
 	// delete all saved delete path pointers
 	delete[] delete_path;
 
-	return toReturn;
+	return true;
 }
 
 /* Return number of (word -> translation) pairs saved currently in the trie */
@@ -398,9 +394,8 @@ void Trie<character_t>::delete_from_csv( std::string filename)
 
 			// delete tuple
 			arg1 = str_to_c<character_t>(word);
-			arg2 = this->delete_word( arg1 );
+			this->delete_word( arg1 );
 			delete[] arg1;
-			delete[] arg2;
 		}
 	}
 
