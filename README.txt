@@ -26,4 +26,6 @@ Future plans:
 8) copy constructors
 9) tests
 10) iterative destructor, saver
-11) trienode insert, trienode set_null, return values error handling
+11) trienode insert, trienode set_null and extreme cases error handling
+12) end_of_string defined for every trie
+13_ give dictionary name after trie creation

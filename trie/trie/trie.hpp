@@ -44,7 +44,8 @@ public:
 	character_t* search_word( const character_t* word);
 
 	/* add a new word with its translation in the Trie
-		return false if the word given already exists in the Trie */
+		return false if the word given already exists in the Trie
+		or if the trie has the maximum number of translations (4294967295) */
 	bool add_word( const character_t* word, const character_t* translation);
 
 	/* delete a word from the Trie with its translation
@@ -188,14 +189,15 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 	// for a successful search, we should not have an unsaved part
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
-	uint32_t current_word_position = -1;
+	uint32_t current_word_position = 0;
 	while (current != NULL)
 	{
-		++current_word_position;
-
 		previous = current;
 		current = current->get_node_if_possible( word[current_word_position] );
+
+		++current_word_position;
 	}
+	current_word_position--;
 
 	// report an error if word given is not saved or it doesn't have a translation
 	if ( (strlen(word) != current_word_position) || (previous->get_translation() == NULL) )
@@ -207,17 +209,21 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 template <class character_t>
 bool Trie<character_t>::add_word( const character_t* word, const character_t* translation)
 {
+	if (this->entry_count == std::numeric_limits<uint32_t>::max())
+		return false;
+
 	// read existing Trie until you reach unsaved part of the word
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
-	uint32_t current_word_position = -1;
+	uint32_t current_word_position = 0;
 	while (current != NULL)
 	{
-		++current_word_position;
-
 		previous = current;
 		current = current->get_node_if_possible( word[current_word_position] );
+
+		++current_word_position;
 	}
+	current_word_position--;
 
 	// start inserting TrieNodes (letters)
 	while ( word[current_word_position] != ::trie::end_of_string )
@@ -250,16 +256,17 @@ bool Trie<character_t>::delete_word( const character_t* word)
 	// for a successful deletion, we should not have an unsaved part
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
-	uint32_t current_word_position = -1;
+	uint32_t current_word_position = 0;
 	while (current != NULL)
 	{
-		++current_word_position;
-
 		previous = current;
 		current = current->get_node_if_possible( word[current_word_position] );
 
 		delete_path[current_word_position] = previous;
+
+		++current_word_position;
 	}
+	current_word_position--;
 
 	// report an error if word given is not saved or it doesn't have a translation
 	if ( (strlen(word) != current_word_position) || previous->get_translation() == NULL)
@@ -269,7 +276,7 @@ bool Trie<character_t>::delete_word( const character_t* word)
 	previous->set_translation(NULL);
 
 	// loop through the delete path in reverse order
-	for (int i=strlen(word); i > -1; i--)
+	for (int i=(strlen(word)-1); i > -1; i--)
 	{
 		/* if current node in the delete path
 			1) doesn't have children and translation (empty)
@@ -307,7 +314,7 @@ template <class character_t>
 void Trie<character_t>::save_changes()
 {
 	if (this->dictionary_name == "")
-		return;
+		throw ErrorOpeningDictionaryException("-- no dictionary name given --");
 
 	// open dictionary file to write from scratch
 	FILE* file = fopen( this->dictionary_name.c_str(), "wb");

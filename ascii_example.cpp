@@ -69,7 +69,7 @@ int main(void)
 				if ( arg2 != NULL )
 				{
 					printf("%s -> ", input1.c_str());
-					for (uint32_t i = 0; arg2[i] != ::trie::end_of_string; i++)
+					for (uint8_t i = 0; arg2[i] != ::trie::end_of_string; i++)
 						printf("%lc", arg2[i]);
 					printf("\n\n");
 				}

@@ -44,8 +44,8 @@ public:
 	/* return true if TrieNode has 0 children and no translation */
 	bool is_empty();
 
-	/* return size of children array */
-	uint32_t get_children_count();
+	/* return size of children array - return uint64_t always to catch worst case for uint32_t */
+	uint64_t get_children_count();
 
 	/* manage TrieNode translation */
 	character_t* get_translation();
@@ -53,16 +53,16 @@ public:
 
 	/* return a Trienode pointer following the path of the argument letter
 		return NULL if there doesn't exist one */
-	TrieNode* get_node_if_possible( character_t letter );
+	TrieNode* get_node_if_possible(const character_t letter );
 
 	/* adds a new Trienode path in current Trienode, updates both zeros_map and children
 		assumes that letter given as argument will always be 0 in current zeros_map
 		return a pointer to the newly inserted child */
-	TrieNode* insert_letter( character_t letter );
+	TrieNode* insert_letter(const character_t letter );
 
 	/* deletes a Trienode path in current Trienode, updates both zeros_map and children
 		assumes that letter given as argument will always be 1 in current zeros_map */
-	void set_child_null( character_t letter );
+	void set_child_null(const character_t letter );
 
 	/* write words with their translations of the sub-trie of current TrieNde in the file pointed by the file pointer */
 	void save_subtrie( std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
@@ -120,15 +120,15 @@ bool TrieNode<character_t>::is_empty()
 }
 
 template <class character_t> 
-uint32_t TrieNode<character_t>::get_children_count()
+uint64_t TrieNode<character_t>::get_children_count()
 {
-	uint32_t children_count = 0;
+	uint64_t children_count = 0;
 
 	// ones before the 1st zeros group
 	children_count += this->zeros_map[0];
 
 	// ones between the zeros groups
-	for ( uint32_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
+	for ( character_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
 		children_count += this->zeros_map[i+2] - this->zeros_map[i+1] - 1;
 
 	// ones after the last zeros group
@@ -162,9 +162,9 @@ void TrieNode<character_t>::set_translation(const character_t* t)
 }
 
 template <class character_t>
-TrieNode<character_t>* TrieNode<character_t>::get_node_if_possible( character_t letter )
+TrieNode<character_t>* TrieNode<character_t>::get_node_if_possible(const character_t letter )
 {
-	uint32_t children_count = 0;
+	uint64_t children_count = 0;
 
 	// letter exists before the 1st zeros group (ones group)
 	if (letter < this->zeros_map[0])
@@ -173,7 +173,7 @@ TrieNode<character_t>* TrieNode<character_t>::get_node_if_possible( character_t 
 	// update current children count
 	children_count += this->zeros_map[0];
 
-	for ( uint32_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
+	for ( character_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
 	{
 		// letter exists in a zeros group
 		if ( (this->zeros_map[i] <= letter) && (letter <= this->zeros_map[i+1]) )
@@ -188,7 +188,7 @@ TrieNode<character_t>* TrieNode<character_t>::get_node_if_possible( character_t 
 	}
 
 	// letter exists in the last zeros group
-	uint32_t i = (this->zeros_map_half_size*2) - 2;
+	character_t i = (this->zeros_map_half_size*2) - 2;
 	if ( (this->zeros_map[i] <= letter) && (letter <= this->zeros_map[i+1]) )
 		return NULL;
 
@@ -202,20 +202,20 @@ TrieNode<character_t>* TrieNode<character_t>::get_node_if_possible( character_t 
 }
 
 template <class character_t>
-TrieNode<character_t>* TrieNode<character_t>::insert_letter( character_t letter )
+TrieNode<character_t>* TrieNode<character_t>::insert_letter(const character_t letter )
 {
 	/* 1) First
 			- count number of children pointers
 			- find the index of zeros_map that will be changed
 			- find the index at which the new pointer will be inserted in children array */
 
-	uint32_t children_count = 0;
-	uint32_t index_to_insert_children, index_to_change_zeros;
+	uint64_t children_count = 0;
+	character_t index_to_insert_children, index_to_change_zeros;
 
 	// update current children count
 	children_count += this->zeros_map[0];
 
-	for ( uint32_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
+	for ( character_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
 	{
 		// found the zeros group that letter exists
 		if ( (this->zeros_map[i] <= letter) && (letter <= this->zeros_map[i+1]) )
@@ -248,12 +248,12 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter( character_t letter 
 	// Create new children pointers array
 	TrieNode **new_children = new TrieNode<character_t> *[children_count+1];
 
-	for ( uint32_t i = 0; i < index_to_insert_children; i++)
+	for ( character_t i = 0; i < index_to_insert_children; i++)
 		new_children[i] = this->children[i];
 
 	new_children[index_to_insert_children] = toReturn;
 
-	for ( uint32_t i = index_to_insert_children+1; i < children_count+1; i++)
+	for ( uint64_t i = index_to_insert_children+1; i < children_count+1; i++)
 		new_children[i] = this->children[i-1];
 
 	// swap with current children pointers array and delete the old one
@@ -270,17 +270,17 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter( character_t letter 
 	if ( (this->zeros_map[index_to_change_zeros] < letter) && (letter < this->zeros_map[index_to_change_zeros+1]) )
 	{
 		character_t *new_zeros;
-		uint32_t old_end_value = this->zeros_map[index_to_change_zeros+1];
+		character_t old_end_value = this->zeros_map[index_to_change_zeros+1];
 		this->zeros_map[index_to_change_zeros+1] = letter-1;
 		new_zeros = new character_t[(this->zeros_map_half_size*2)+2];
 
-		for (uint32_t i = 0; i < index_to_change_zeros+2; i++)
+		for (character_t i = 0; i < index_to_change_zeros+2; i++)
 			new_zeros[i] = this->zeros_map[i];
 
 		new_zeros[index_to_change_zeros+2] = letter+1;
 		new_zeros[index_to_change_zeros+3] = old_end_value;
 
-		for (uint32_t i = index_to_change_zeros+4; i < (this->zeros_map_half_size*2)+2; i ++)
+		for (uint64_t i = index_to_change_zeros+4; i < (this->zeros_map_half_size*2)+2; i ++)
 			new_zeros[i] = this->zeros_map[i-2];
 
 		delete[] this->zeros_map;
@@ -300,10 +300,10 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter( character_t letter 
 		character_t *new_zeros;
 		new_zeros = new character_t[(this->zeros_map_half_size*2)-2];
 
-		for (uint32_t i = 0; i < index_to_change_zeros; i++)
+		for (character_t i = 0; i < index_to_change_zeros; i++)
 			new_zeros[i] = this->zeros_map[i];
 
-		for (uint32_t i = index_to_change_zeros+2; i < (this->zeros_map_half_size*2); i++)
+		for (uint64_t i = index_to_change_zeros+2; i < (this->zeros_map_half_size*2); i++)
 			new_zeros[i-2] = this->zeros_map[i];
 
 		delete[] this->zeros_map;
@@ -316,15 +316,15 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter( character_t letter 
 }
 
 template <class character_t>
-void TrieNode<character_t>::set_child_null( character_t letter )
+void TrieNode<character_t>::set_child_null(const character_t letter )
 {
 	/* 1) First
 			- count number of children pointers
 			- find the index of zeros_map that will be changed
 			- find the index at which the pointer will be deleted from children array */
 
-	uint32_t children_count = 0;
-	uint32_t index_to_delete_children, index_to_change_zeros;
+	uint64_t children_count = 0;
+	character_t index_to_delete_children, index_to_change_zeros;
 
 	// letter exists before the 1st zeros group (ones group)
 	// in this case, we don't set index_to_change_zeros, because it can't have a value of -1 (see how we handle it in step 3)
@@ -336,7 +336,7 @@ void TrieNode<character_t>::set_child_null( character_t letter )
 	// update current children count
 	children_count += this->zeros_map[0];
 
-	for ( uint32_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
+	for ( character_t i = 0; i < (this->zeros_map_half_size*2)-2; i += 2)
 	{
 		// found the zeros group after which the letter exists
 		if ( (this->zeros_map[i+1] < letter) && (letter < this->zeros_map[i+2]) )
@@ -367,10 +367,10 @@ void TrieNode<character_t>::set_child_null( character_t letter )
 	TrieNode **temp;
 	(children_count > 1) ? temp = new TrieNode<character_t> *[children_count-1] : temp = NULL;
 
-	for ( uint32_t i = 0; i < index_to_delete_children; i++)
+	for ( character_t i = 0; i < index_to_delete_children; i++)
 		temp[i] = this->children[i];
 
-	for ( uint32_t i = index_to_delete_children+1; i < children_count; i++)
+	for ( uint64_t i = index_to_delete_children+1; i < children_count; i++)
 		temp[i-1] = this->children[i];
 
 	// swap with current child pointers array and delete the old one
@@ -447,10 +447,10 @@ void TrieNode<character_t>::set_child_null( character_t letter )
 		character_t *new_zeros;
 		new_zeros = new character_t[(this->zeros_map_half_size*2)-2];
 
-		for (uint32_t i = 0; i < index_to_change_zeros+1; i++)
+		for (uint64_t i = 0; i < index_to_change_zeros+1; i++)
 			new_zeros[i] = this->zeros_map[i];
 
-		for (uint32_t i = index_to_change_zeros+3; i < (this->zeros_map_half_size*2); i++)
+		for (uint64_t i = index_to_change_zeros+3; i < (this->zeros_map_half_size*2); i++)
 			new_zeros[i-2] = this->zeros_map[i];
 
 		delete[] this->zeros_map;
@@ -470,13 +470,13 @@ void TrieNode<character_t>::set_child_null( character_t letter )
 		character_t *new_zeros;
 		new_zeros = new character_t[(this->zeros_map_half_size*2)+2];
 
-		for (uint32_t i = 0; i < index_to_change_zeros+1; i++)
+		for (uint64_t i = 0; i < index_to_change_zeros+1; i++)
 			new_zeros[i] = this->zeros_map[i];
 
 		new_zeros[index_to_change_zeros+1] = letter;
 		new_zeros[index_to_change_zeros+2] = letter;
 
-		for (uint32_t i = index_to_change_zeros+1; i < (this->zeros_map_half_size*2); i++)
+		for (uint64_t i = index_to_change_zeros+1; i < (this->zeros_map_half_size*2); i++)
 			new_zeros[i+2] = this->zeros_map[i];
 
 		delete[] this->zeros_map;
