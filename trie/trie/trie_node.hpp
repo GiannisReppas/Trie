@@ -39,6 +39,7 @@ private:
 
 public:
 	TrieNode();
+	TrieNode(TrieNode&);
 	~TrieNode();
 
 	/* return true if TrieNode has 0 children and no translation */
@@ -82,6 +83,31 @@ TrieNode<character_t>::TrieNode()
 
 	// no translation in the TrieNode
 	this->translation = NULL;
+}
+
+template <class character_t> 
+TrieNode<character_t>::TrieNode(TrieNode& to_copy)
+{
+	// initialize the empty TrieNode
+	this->zeros_map = new character_t[2];
+	this->zeros_map[0] = 0;
+	this->zeros_map[1] = std::numeric_limits<character_t>::max();
+	this->zeros_map_half_size = 1;
+
+	this->children = NULL;
+
+	this->translation = NULL;
+
+	// copy children of to_copy one-by-one, using insertion functions
+	uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
+	for (character_t i=0; i < alphabet_size; i++)
+	{
+		if (to_copy.get_node_if_possible(i) != NULL)
+			this->insert_letter(i);
+	}
+
+	// copy translation
+	this->set_translation(to_copy.get_translation());
 }
 
 template <class character_t> 

@@ -7,7 +7,7 @@ Trie manages characters as unsigned integers, currently offering types of uint8_
 
 The data structure can optionally load and save entries from disk binary and csv files.
 
-A main function in ascii_example.cpp shows how to use a Trie of uint8_t characters to manage all ascii words.
+A main function in ascii_example.cpp shows how to use a Trie of uint8_t characters to manage all ascii words, or an extension of them, considering 256 different bits.
 
 To build and run:
 
@@ -28,4 +28,4 @@ Future plans:
 10) iterative destructor, saver
 11) trienode insert, trienode set_null and extreme cases error handling
 12) end_of_string defined for every trie
-13_ give dictionary name after trie creation
+13) give dictionary name after trie creation
