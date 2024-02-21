@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/triectionary.dir/ascii_example.cpp.o -o triectionary 
