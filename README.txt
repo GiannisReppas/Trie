@@ -9,6 +9,10 @@ The data structure can optionally load and save entries from disk binary and csv
 
 A main function in ascii_example.cpp shows how to use a Trie of uint8_t characters to manage all ascii words, or an extension of them, considering 256 different bits.
 
+maximum number of entry count set to 2^64 - 1
+maximum word size set to 2^8 - 2
+maximum translation size set to 2^16 - 2
+
 To build and run:
 
 mkdir build && cd build
@@ -20,9 +24,9 @@ Future plans:
 2) Use a similar data-structure for the translation strings
 3) More effective load-save operations on disk
 4) switch between RLE and normal bitmapping when it is most optimal
-5) add prefix, etc. functionality
+5) add word prefix functionality
 6) python bindings
-7) add real alphabet - integer mapping outside of the library
+7) add real alphabet - integer mapping example outside of the library
 8) copy constructors
 9) tests
 10) iterative destructor, saver
@@ -30,3 +34,4 @@ Future plans:
 12) end_of_string defined for every trie
 13) give dictionary name after trie creation
 14) memory reallocations in batches, not 1-by-1
+15) allow custom setting for word_size, translation_size, entry_count max. values

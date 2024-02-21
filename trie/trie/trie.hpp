@@ -31,7 +31,7 @@ private:
 	TrieNode<character_t>* head;
 
 	/* number of (word -> translation) pairs in the Trie */
-	uint32_t entry_count;
+	uint64_t entry_count;
 
 public:
 	Trie();
@@ -42,7 +42,7 @@ public:
 	bool is_empty();
 
 	/* return number of saved translations */
-	uint32_t get_entry_count();
+	uint64_t get_entry_count();
 
 	/* search for the translation of a word in the Trie
 		return a pointer to the translation of the word
@@ -72,7 +72,7 @@ template <class character_t>
 Trie<character_t>::Trie()
 {
 	// check if the type given is valid for the template class
-	uint32_t bytes;
+	uint8_t bytes;
 	if (std::is_same<character_t, uint8_t>::value)
 		bytes = 1;
 	else if (std::is_same<character_t, uint16_t>::value)
@@ -94,7 +94,7 @@ template <class character_t>
 Trie<character_t>::Trie( std::string dictionary_name)
 {
 	// check if the type given is valid for the template class
-	uint32_t bytes;
+	uint8_t bytes;
 	if (std::is_same<character_t, uint8_t>::value)
 		bytes = 1;
 	else if (std::is_same<character_t, uint16_t>::value)
@@ -109,7 +109,7 @@ Trie<character_t>::Trie( std::string dictionary_name)
 	this->dictionary_name = dictionary_name;
 
 	// open dictionary file to read it
-	uint32_t character_size;
+	uint8_t character_size;
 	FILE* file = fopen(this->dictionary_name.c_str(), "rb");
 	if (file == NULL)
 	{
@@ -118,9 +118,9 @@ Trie<character_t>::Trie( std::string dictionary_name)
 			throw ErrorOpeningDictionaryException(this->dictionary_name);
 
 		character_size = sizeof(character_t);
-		fwrite( &character_size, sizeof(uint32_t), 1, file);
+		fwrite( &character_size, sizeof(uint8_t), 1, file);
 
-		fwrite( &this->entry_count, sizeof(uint32_t), 1, file);
+		fwrite( &this->entry_count, sizeof(uint64_t), 1, file);
 
 		fclose(file);
 
@@ -130,7 +130,7 @@ Trie<character_t>::Trie( std::string dictionary_name)
 	}
 
 	// read character size for this dictionary
-	fread( &character_size, sizeof(uint32_t), 1, file);
+	fread( &character_size, sizeof(uint8_t), 1, file);
 	if (character_size != bytes)
 	{
 		fclose(file);
@@ -141,26 +141,27 @@ Trie<character_t>::Trie( std::string dictionary_name)
 	this->head = new TrieNode<character_t>();
 
 	// read total number of entries to insert in the trie
-	uint32_t local_entry_count;
-	fread( &local_entry_count, sizeof(uint32_t), 1, file);
+	uint64_t local_entry_count;
+	fread( &local_entry_count, sizeof(uint64_t), 1, file);
 
 	// read and add entries
-	uint32_t word_size;
+	uint8_t word_size;
+	uint16_t translation_size;
 	character_t* current_word;
 	character_t* current_translation;
-	for (uint32_t i=0; i < local_entry_count; i++)
+	for (uint64_t i=0; i < local_entry_count; i++)
 	{
 		// read word
-		fread( &word_size, sizeof(uint32_t), 1, file);
+		fread( &word_size, sizeof(uint8_t), 1, file);
 		current_word = new character_t[word_size+1];
 		fread( current_word, sizeof(character_t), word_size, file);
 		current_word[word_size] = ::trie::end_of_string;
 
 		// read translation
-		fread( &word_size, sizeof(uint32_t), 1, file);
-		current_translation = new character_t[word_size+1];
-		fread( current_translation, sizeof(character_t), word_size, file);
-		current_translation[word_size] = ::trie::end_of_string;
+		fread( &translation_size, sizeof(uint16_t), 1, file);
+		current_translation = new character_t[translation_size+1];
+		fread( current_translation, sizeof(character_t), translation_size, file);
+		current_translation[translation_size] = ::trie::end_of_string;
 
 		// add tuple
 		this->add_word( current_word, current_translation);
@@ -194,7 +195,7 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 	// for a successful search, we should not have an unsaved part
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
-	uint32_t current_word_position = 0;
+	uint8_t current_word_position = 0;
 	while (current != NULL)
 	{
 		previous = current;
@@ -214,13 +215,13 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 template <class character_t>
 bool Trie<character_t>::add_word( const character_t* word, const character_t* translation)
 {
-	if (this->entry_count == std::numeric_limits<uint32_t>::max())
+	if (this->entry_count == std::numeric_limits<uint64_t>::max())
 		return false;
 
 	// read existing Trie until you reach unsaved part of the word
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
-	uint32_t current_word_position = 0;
+	uint8_t current_word_position = 0;
 	while (current != NULL)
 	{
 		previous = current;
@@ -254,14 +255,14 @@ bool Trie<character_t>::delete_word( const character_t* word)
 	// keep track of all the visited nodes while traversing the trie in an array of pointers
 	// they could potentially be deleted in the end
 	TrieNode<character_t>** delete_path = new TrieNode<character_t>*[ strlen(word)+1 ];
-	for (uint32_t i=0; i < strlen(word); i++)
+	for (uint8_t i=0; i < strlen(word); i++)
 		delete_path[i] = NULL;
 
 	// read existing Trie and update the delete path until you reach unsaved part of the word
 	// for a successful deletion, we should not have an unsaved part
 	TrieNode<character_t>* current = this->head;
 	TrieNode<character_t>* previous = NULL;
-	uint32_t current_word_position = 0;
+	uint8_t current_word_position = 0;
 	while (current != NULL)
 	{
 		previous = current;
@@ -310,7 +311,7 @@ bool Trie<character_t>::delete_word( const character_t* word)
 }
 
 template <class character_t>
-uint32_t Trie<character_t>::get_entry_count()
+uint64_t Trie<character_t>::get_entry_count()
 {
 	return this->entry_count;
 }
@@ -327,10 +328,10 @@ void Trie<character_t>::save_changes()
 		throw ErrorOpeningDictionaryException(this->dictionary_name);
 
 	// write character size and total entries for this dictionary
-	uint32_t character_size = sizeof(character_t);
-	fwrite( &character_size, sizeof(uint32_t), 1, file);
+	uint8_t character_size = sizeof(character_t);
+	fwrite( &character_size, sizeof(uint8_t), 1, file);
 
-	fwrite( &this->entry_count, sizeof(uint32_t), 1, file);
+	fwrite( &this->entry_count, sizeof(uint64_t), 1, file);
 
 	// start saving tuples, recursively
 	this->head->save_subtrie( std::vector<character_t>(), std::vector<character_t>(), file);

@@ -93,7 +93,7 @@ int main(void)
 			}
 			else if (!input.compare("\\c"))
 			{
-				printf("Totally %d entries in Trie\n\n", t->get_entry_count());
+				printf("Totally %ld entries in Trie\n\n", t->get_entry_count());
 			}
 			else if (!input.compare("\\i"))
 			{

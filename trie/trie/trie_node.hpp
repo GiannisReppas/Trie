@@ -97,23 +97,10 @@ TrieNode<character_t>::~TrieNode()
 	// first, destruct all children of current node
 	// loop through all possile letters
 	// if current letter enters a zeros group, shift to end of the zeros group
-	character_t next_child = 0;
-	character_t next_zeros_group = 0;
-	character_t_parent alphabet_size = std::numeric_limits<character_t>::max() + 1;
-	for (character_t letter = 0; letter < alphabet_size; letter++)
+	character_t_parent children_count = this->get_children_count();
+	for (character_t_parent child = 0; child < children_count; child++)
 	{
-		if ( (next_zeros_group < this->zeros_map_half_size*2) && (letter == this->zeros_map[next_zeros_group]) )
-		{
-			letter = this->zeros_map[next_zeros_group+1];
-			if (letter == (alphabet_size-1))
-			{
-				break;
-			}
-			letter++;
-			next_zeros_group += 2;
-		}
-
-		delete this->children[next_child++];
+		delete this->children[child];
 	}
 
 	// all children deleted, so delete current TrieNode
@@ -501,35 +488,34 @@ void TrieNode<character_t>::save_subtrie( std::vector<character_t> current_word,
 	// write current translation in dictionary file, if there exists one
 	if ( this->translation != NULL)
 	{
-		uint32_t word_size = current_word.size();
-		fwrite( &word_size, sizeof(uint32_t), 1, file);
+		uint8_t word_size = current_word.size();
+		fwrite( &word_size, sizeof(uint8_t), 1, file);
 		fwrite( current_word.data(), sizeof(character_t), current_word.size(), file);
 
-		word_size = strlen(this->translation);
-		fwrite( &word_size, sizeof(uint32_t), 1, file);
+		uint16_t translation_size = strlen(this->translation);
+		fwrite( &translation_size, sizeof(uint16_t), 1, file);
 		fwrite( this->translation, sizeof(character_t), strlen(this->translation), file);
 	}
 
 	// read zeros map
 	// for every active letter that you find, call recursive saving function
+	// we also need the value of the letter, so we can't just get the children_count (like in the destructor)
 	character_t next_child = 0;
-	character_t next_zeros_group = 0;
-	character_t_parent alphabet_size = std::numeric_limits<character_t>::max() + 1;
-	for (character_t letter = 0; letter < alphabet_size; letter++)
+	character_t_parent current_letter = 0;
+	character_t_parent current_zeros_map_position = 0;
+	while(current_zeros_map_position != this->zeros_map_half_size*2)
 	{
-		if ( (next_zeros_group < this->zeros_map_half_size*2) && (letter == this->zeros_map[next_zeros_group]) )
-		{
-			letter = this->zeros_map[next_zeros_group+1];
-			if (letter == (alphabet_size-1))
-			{
-				break;
-			}
-			letter++;
-			next_zeros_group += 2;
-		}
+		while (zeros_map[current_zeros_map_position] != current_letter)
+			this->children[next_child++]->save_subtrie( current_word, std::vector<character_t>( 1, current_letter++), file);
 
-		this->children[next_child++]->save_subtrie( current_word, std::vector<character_t>( 1, letter), file);
+		current_letter = zeros_map[current_zeros_map_position+1] + 1;
+		current_zeros_map_position += 2;
 	}
+
+	// letters after last zeros_group (if there exist any)
+	character_t_parent alphabet_size =  std::numeric_limits<character_t>::max() + 1;
+	while (current_letter != alphabet_size)
+		this->children[next_child++]->save_subtrie( current_word, std::vector<character_t>( 1, (character_t) current_letter++), file);
 }
 
 }
