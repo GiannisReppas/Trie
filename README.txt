@@ -29,3 +29,4 @@ Future plans:
 11) trienode insert, trienode set_null and extreme cases error handling
 12) end_of_string defined for every trie
 13) give dictionary name after trie creation
+14) memory reallocations in batches, not 1-by-1

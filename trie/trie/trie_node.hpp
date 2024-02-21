@@ -13,6 +13,13 @@ template <class character_t>
 class TrieNode
 {
 private:
+	// type to be used for the edge cases of having the biggest possible zeros_map
+	using character_t_parent =
+		typename std::conditional< sizeof(character_t) == 1, uint16_t,
+		typename std::conditional< sizeof(character_t) == 2, uint32_t,
+		typename std::conditional< sizeof(character_t) == 4, uint64_t,
+		void>::type >::type >::type;
+
 	/* variable size ( 2 to ((ALPHABET_SIZE/2) * 2) * sizeof(character_t) )
 		worst case when bits have the form of 01010101... zeros_map add 2 elements for
 		each 0 bit
@@ -39,14 +46,13 @@ private:
 
 public:
 	TrieNode();
-	TrieNode(TrieNode&);
 	~TrieNode();
 
 	/* return true if TrieNode has 0 children and no translation */
 	bool is_empty();
 
-	/* return size of children array - return uint64_t always to catch worst case for uint32_t */
-	uint64_t get_children_count();
+	/* return size of children array - return parent type always to catch worst case for character_t */
+	character_t_parent get_children_count();
 
 	/* manage TrieNode translation */
 	character_t* get_translation();
@@ -86,37 +92,14 @@ TrieNode<character_t>::TrieNode()
 }
 
 template <class character_t> 
-TrieNode<character_t>::TrieNode(TrieNode& to_copy)
-{
-	// initialize the empty TrieNode
-	this->zeros_map = new character_t[2];
-	this->zeros_map[0] = 0;
-	this->zeros_map[1] = std::numeric_limits<character_t>::max();
-	this->zeros_map_half_size = 1;
-
-	this->children = NULL;
-
-	this->translation = NULL;
-
-	// copy children of to_copy one-by-one, using insertion functions
-	uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
-	for (character_t i=0; i < alphabet_size; i++)
-	{
-		if (to_copy.get_node_if_possible(i) != NULL)
-			this->insert_letter(i);
-	}
-
-	// copy translation
-	this->set_translation(to_copy.get_translation());
-}
-
-template <class character_t> 
 TrieNode<character_t>::~TrieNode()
 {
-	// find letter corresponding to each child and delete it before deleting current TrieNode
+	// first, destruct all children of current node
+	// loop through all possile letters
+	// if current letter enters a zeros group, shift to end of the zeros group
 	character_t next_child = 0;
 	character_t next_zeros_group = 0;
-	uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
+	character_t_parent alphabet_size = std::numeric_limits<character_t>::max() + 1;
 	for (character_t letter = 0; letter < alphabet_size; letter++)
 	{
 		if ( (next_zeros_group < this->zeros_map_half_size*2) && (letter == this->zeros_map[next_zeros_group]) )
@@ -146,9 +129,9 @@ bool TrieNode<character_t>::is_empty()
 }
 
 template <class character_t> 
-uint64_t TrieNode<character_t>::get_children_count()
+typename TrieNode<character_t>::character_t_parent TrieNode<character_t>::get_children_count()
 {
-	uint64_t children_count = 0;
+	character_t_parent children_count = 0;
 
 	// ones before the 1st zeros group
 	children_count += this->zeros_map[0];
@@ -190,7 +173,7 @@ void TrieNode<character_t>::set_translation(const character_t* t)
 template <class character_t>
 TrieNode<character_t>* TrieNode<character_t>::get_node_if_possible(const character_t letter )
 {
-	uint64_t children_count = 0;
+	character_t_parent children_count = 0;
 
 	// letter exists before the 1st zeros group (ones group)
 	if (letter < this->zeros_map[0])
@@ -235,7 +218,7 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter(const character_t le
 			- find the index of zeros_map that will be changed
 			- find the index at which the new pointer will be inserted in children array */
 
-	uint64_t children_count = 0;
+	character_t_parent children_count = 0;
 	character_t index_to_insert_children, index_to_change_zeros;
 
 	// update current children count
@@ -279,7 +262,7 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter(const character_t le
 
 	new_children[index_to_insert_children] = toReturn;
 
-	for ( uint64_t i = index_to_insert_children+1; i < children_count+1; i++)
+	for ( character_t_parent i = index_to_insert_children+1; i < children_count+1; i++)
 		new_children[i] = this->children[i-1];
 
 	// swap with current children pointers array and delete the old one
@@ -306,7 +289,7 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter(const character_t le
 		new_zeros[index_to_change_zeros+2] = letter+1;
 		new_zeros[index_to_change_zeros+3] = old_end_value;
 
-		for (uint64_t i = index_to_change_zeros+4; i < (this->zeros_map_half_size*2)+2; i ++)
+		for (character_t i = index_to_change_zeros+4; i < (this->zeros_map_half_size*2)+2; i++)
 			new_zeros[i] = this->zeros_map[i-2];
 
 		delete[] this->zeros_map;
@@ -329,7 +312,7 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter(const character_t le
 		for (character_t i = 0; i < index_to_change_zeros; i++)
 			new_zeros[i] = this->zeros_map[i];
 
-		for (uint64_t i = index_to_change_zeros+2; i < (this->zeros_map_half_size*2); i++)
+		for (character_t_parent i = index_to_change_zeros+2; i < (this->zeros_map_half_size*2); i++)
 			new_zeros[i-2] = this->zeros_map[i];
 
 		delete[] this->zeros_map;
@@ -349,7 +332,7 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 			- find the index of zeros_map that will be changed
 			- find the index at which the pointer will be deleted from children array */
 
-	uint64_t children_count = 0;
+	character_t_parent children_count = 0;
 	character_t index_to_delete_children, index_to_change_zeros;
 
 	// letter exists before the 1st zeros group (ones group)
@@ -396,7 +379,7 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 	for ( character_t i = 0; i < index_to_delete_children; i++)
 		temp[i] = this->children[i];
 
-	for ( uint64_t i = index_to_delete_children+1; i < children_count; i++)
+	for ( character_t_parent i = index_to_delete_children+1; i < children_count; i++)
 		temp[i-1] = this->children[i];
 
 	// swap with current child pointers array and delete the old one
@@ -420,7 +403,6 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 									 4b) e.g. [x,60] [70,y], make 69 zero -> [x,60] [69,y] (modify 1)
 									  5) e.g. [x,60] [70,y], make 62 zero -> [x,61] [62,62] [70,y] (insert 2) */
 
-	// edge cases
 	if (letter < this->zeros_map[0])
 	{
 		if (letter == this->zeros_map[0]-1)
@@ -435,7 +417,7 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 			new_zeros[0] = letter;
 			new_zeros[1] = letter;
 
-			for (uint32_t i = 0; i < (this->zeros_map_half_size*2); i++)
+			for (character_t i = 0; i < (this->zeros_map_half_size*2); i++)
 				new_zeros[i+2] = this->zeros_map[i];
 
 			delete[] this->zeros_map;
@@ -454,7 +436,7 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 			character_t *new_zeros;
 			new_zeros = new character_t[(this->zeros_map_half_size*2)+2];
 
-			for (uint32_t i = 0; i < (this->zeros_map_half_size*2); i++)
+			for (character_t i = 0; i < (this->zeros_map_half_size*2); i++)
 				new_zeros[i] = this->zeros_map[i];
 
 			new_zeros[index_to_change_zeros+1] = letter;
@@ -465,7 +447,6 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 			this->zeros_map_half_size += 1;
 		}
 	}
-	// normal cases
 	else if ( (this->zeros_map[index_to_change_zeros+1] - this->zeros_map[index_to_change_zeros]) == 2)
 	{
 		this->zeros_map[index_to_change_zeros] = this->zeros_map[index_to_change_zeros+2];
@@ -473,10 +454,10 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 		character_t *new_zeros;
 		new_zeros = new character_t[(this->zeros_map_half_size*2)-2];
 
-		for (uint64_t i = 0; i < index_to_change_zeros+1; i++)
+		for (character_t i = 0; i < index_to_change_zeros+1; i++)
 			new_zeros[i] = this->zeros_map[i];
 
-		for (uint64_t i = index_to_change_zeros+3; i < (this->zeros_map_half_size*2); i++)
+		for (character_t_parent i = index_to_change_zeros+3; i < (this->zeros_map_half_size*2); i++)
 			new_zeros[i-2] = this->zeros_map[i];
 
 		delete[] this->zeros_map;
@@ -496,13 +477,13 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 		character_t *new_zeros;
 		new_zeros = new character_t[(this->zeros_map_half_size*2)+2];
 
-		for (uint64_t i = 0; i < index_to_change_zeros+1; i++)
+		for (character_t i = 0; i < index_to_change_zeros+1; i++)
 			new_zeros[i] = this->zeros_map[i];
 
 		new_zeros[index_to_change_zeros+1] = letter;
 		new_zeros[index_to_change_zeros+2] = letter;
 
-		for (uint64_t i = index_to_change_zeros+1; i < (this->zeros_map_half_size*2); i++)
+		for (character_t i = index_to_change_zeros+1; i < (this->zeros_map_half_size*2); i++)
 			new_zeros[i+2] = this->zeros_map[i];
 
 		delete[] this->zeros_map;
@@ -533,7 +514,7 @@ void TrieNode<character_t>::save_subtrie( std::vector<character_t> current_word,
 	// for every active letter that you find, call recursive saving function
 	character_t next_child = 0;
 	character_t next_zeros_group = 0;
-	uint64_t alphabet_size = std::numeric_limits<character_t>::max() + 1;
+	character_t_parent alphabet_size = std::numeric_limits<character_t>::max() + 1;
 	for (character_t letter = 0; letter < alphabet_size; letter++)
 	{
 		if ( (next_zeros_group < this->zeros_map_half_size*2) && (letter == this->zeros_map[next_zeros_group]) )

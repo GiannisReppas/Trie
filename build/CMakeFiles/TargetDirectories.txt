@@ -1,0 +1,5 @@
+/home/giannis/Desktop/triectionary/build/CMakeFiles/triectionary.dir
+/home/giannis/Desktop/triectionary/build/CMakeFiles/edit_cache.dir
+/home/giannis/Desktop/triectionary/build/CMakeFiles/rebuild_cache.dir
+/home/giannis/Desktop/triectionary/build/trie/CMakeFiles/edit_cache.dir
+/home/giannis/Desktop/triectionary/build/trie/CMakeFiles/rebuild_cache.dir

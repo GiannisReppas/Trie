@@ -18,6 +18,12 @@ template <class character_t>
 class Trie
 {
 private:
+	using character_t_parent =
+		typename std::conditional< sizeof(character_t) == 1, uint16_t,
+		typename std::conditional< sizeof(character_t) == 2, uint32_t,
+		typename std::conditional< sizeof(character_t) == 4, uint64_t,
+		void>::type >::type >::type;
+
 	/* name of the Trie (and the file in disk) */
 	std::string dictionary_name;
 
@@ -60,7 +66,6 @@ public:
 		delete is used mainly for debugging and ignored the provided translation */
 	void insert_from_csv( std::string filename);
 	void delete_from_csv( std::string filename);
-
 };
 
 template <class character_t>
