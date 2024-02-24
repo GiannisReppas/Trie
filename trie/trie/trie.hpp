@@ -215,7 +215,9 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 template <class character_t>
 bool Trie<character_t>::add_word( const character_t* word, const character_t* translation)
 {
-	if (this->entry_count == std::numeric_limits<uint64_t>::max())
+	if ( this->entry_count == std::numeric_limits<uint64_t>::max() ||
+		 (strlen(word) == (std::numeric_limits<uint8_t>::max()-1)) ||
+		 (strlen(translation) == (std::numeric_limits<uint16_t>::max()-1)) )
 		return false;
 
 	// read existing Trie until you reach unsaved part of the word

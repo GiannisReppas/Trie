@@ -69,7 +69,7 @@ public:
 
 	/* deletes a Trienode path in current Trienode, updates both zeros_map and children
 		assumes that letter given as argument will always be 1 in current zeros_map */
-	void set_child_null(const character_t letter );
+	bool set_child_null(const character_t letter );
 
 	/* write words with their translations of the sub-trie of current TrieNde in the file pointed by the file pointer */
 	void save_subtrie( std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
@@ -312,7 +312,7 @@ TrieNode<character_t>* TrieNode<character_t>::insert_letter(const character_t le
 }
 
 template <class character_t>
-void TrieNode<character_t>::set_child_null(const character_t letter )
+bool TrieNode<character_t>::set_child_null(const character_t letter )
 {
 	/* 1) First
 			- count number of children pointers
@@ -477,6 +477,8 @@ void TrieNode<character_t>::set_child_null(const character_t letter )
 		this->zeros_map = new_zeros;
 		this->zeros_map_half_size += 1;
 	}
+
+	return true;
 }
 
 template <class character_t>

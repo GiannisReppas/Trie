@@ -30,8 +30,6 @@ Future plans:
 8) copy constructors
 9) tests
 10) iterative destructor, saver
-11) trienode insert, trienode set_null and extreme cases error handling
-12) end_of_string defined for every trie
-13) give dictionary name after trie creation
-14) memory reallocations in batches, not 1-by-1
-15) allow custom setting for word_size, translation_size, entry_count max. values
+11) allow custom setting for word_size, translation_size, entry_count max. values and end_of_string for each trie
+12) give dictionary name after trie creation
+13) memory reallocations in batches, not 1-by-1
