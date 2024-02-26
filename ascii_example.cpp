@@ -17,17 +17,19 @@ int main(void)
 	std::string input, input1, input2;
 	bool correct_input;
 	uint8_t *arg1, *arg2;
+	uint8_t **prefix_answers;
 	do
 	{
 		printf("Main menu:\n");
-		printf("\\a w -> t   ||| add word w with translation t in the dictionary\n");
-		printf("\\s w        ||| search for the translation of word w\n");
-		printf("\\d w        ||| delete word w and its translation\n");
-		printf("\\c          ||| get total number of saved translations in Trie\n");
-		printf("\\i filename ||| import csv file of format (word,translation)\n");
-		printf("\\z filename ||| delete csv file of format (word,translation) - translation is ignored, used mainly for debugging\n");
-		printf("\\w          ||| write current trie information to the dictionary file\n");
-		printf("\\e          ||| exit\n");
+		printf("\\a w -> t     ||| add word w with translation t in the dictionary\n");
+		printf("\\s w          ||| search for the translation of word w\n");
+		printf("\\d w          ||| delete word w and its translation\n");
+		printf("\\p w -> count ||| get count words that begin with word w\n");
+		printf("\\c            ||| get total number of saved translations in Trie\n");
+		printf("\\i filename   ||| import csv file of format (word,translation)\n");
+		printf("\\z filename   ||| delete csv file of format (word,translation) - translation is ignored, used mainly for debugging\n");
+		printf("\\w            ||| write current trie information to the dictionary file\n");
+		printf("\\e            ||| exit\n");
 
 		// prepare for next command
 		input.clear();
@@ -88,6 +90,30 @@ int main(void)
 					printf("Deleted word %s successfully from Trie\n\n", input1.c_str());
 				else
 					printf("%s doesn't exist in this dictionary\n\n", input1.c_str());
+
+				delete[] arg1;
+			}
+			else if (!input.compare("\\p"))
+			{
+				printf("Searching prefixes for: (word -> %s)\n", input1.c_str());
+
+				arg1 = trie::str_to_c<uint8_t>( input1 );
+
+				prefix_answers = t->get_prefix_words( arg1, stoi(input2) );
+
+				printf("prefixes: ");
+				for (uint8_t i = 0; i < stoi(input2); i++)
+				{
+					if (prefix_answers[i] != NULL)
+					{
+						for (uint8_t j = 0; prefix_answers[i][j] != ::trie::end_of_string; j++)
+							printf("%lc", prefix_answers[i][j]);
+						printf(", ");
+						delete[] prefix_answers[i];
+					}
+				}
+				printf("\n\n");
+				delete[] prefix_answers;
 
 				delete[] arg1;
 			}
@@ -165,9 +191,9 @@ bool parse_input( std::string& input, std::string& input1, std::string& input2)
 	// check if input given is correct
 	if (strings.size() > 1)
 	{
-		if (!strings[0].compare("\\a"))
+		if ( (!strings[0].compare("\\a")) || (!strings[0].compare("\\p")) )
 		{
-			input = "\\a";
+			input = strings[0];
 			input1 = "";
 			uint32_t i;
 			bool arrow_flag = false;
@@ -201,8 +227,21 @@ bool parse_input( std::string& input, std::string& input1, std::string& input2)
 				printf("Wrong input given\n\n");
 				return false;
 			}
+
+			if ( (!strings[0].compare("\\p")) )
+			{
+				try
+				{
+					stoi(input2);
+				}
+				catch (std::invalid_argument const& ex)
+				{
+					printf("Wrong input given\n\n");
+					return false;
+				}
+			}
 		}
-		else if ( (!strings[0].compare("\\s")) || (!strings[0].compare("\\d")) || (!strings[0].compare("\\i")) || (!strings[0].compare("\\z"))  )
+		else if ( (!strings[0].compare("\\s")) || (!strings[0].compare("\\d")) || (!strings[0].compare("\\i")) || (!strings[0].compare("\\z")) )
 		{
 			input = strings[0];
 			input1 = "";

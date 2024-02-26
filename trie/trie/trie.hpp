@@ -58,6 +58,8 @@ public:
 		return false if the word given doesn't exist in the Trie */
 	bool delete_word( const character_t* word);
 
+	character_t** get_prefix_words( const character_t* word, uint8_t n);
+
 	/* write current information of trie in the binary dictionary file */
 	void save_changes();
 	
@@ -317,6 +319,42 @@ template <class character_t>
 uint64_t Trie<character_t>::get_entry_count()
 {
 	return this->entry_count;
+}
+
+template <class character_t>
+character_t** Trie<character_t>::get_prefix_words( const character_t* word, uint8_t n)
+{
+	// create an array to return of size n
+	// initialize all words with NULL. They will have a real array after you traverse subtrie of word given as argument
+	character_t** toReturn;
+	toReturn = new character_t*[n];
+	for (uint8_t i = 0; i < n; i++)
+		toReturn[i] = NULL;
+
+	// read existing Trie until you reach unsaved the end or the unsaved part of the word given as argument
+	// write all saved parts of the word in current_word vector
+	std::vector<character_t> current_word;
+
+	TrieNode<character_t>* current = this->head;
+	TrieNode<character_t>* previous = NULL;
+	uint8_t current_word_position = 0;
+	while (current != NULL)
+	{
+		current_word.push_back( word[current_word_position] );
+
+		previous = current;
+		current = current->get_node_if_possible( word[current_word_position] );
+
+		++current_word_position;
+	}
+
+	if (!current_word.empty())
+		current_word.pop_back();
+
+	n--;
+	previous->get_prefix_words( toReturn, current_word, std::vector<character_t>(), n);
+
+	return toReturn;
 }
 
 template <class character_t>

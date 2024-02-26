@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <limits>
+#include <vector>
 
 #include "trie/extended_character_functions.hpp"
 
@@ -73,6 +74,9 @@ public:
 
 	/* write words with their translations of the sub-trie of current TrieNde in the file pointed by the file pointer */
 	void save_subtrie( std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
+
+	/* get words that are saved in the Trie and start with given prefix (TrieNode subtrie) */
+	bool get_prefix_words( character_t** toReturn, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count);
 };
 
 template <class character_t> 
@@ -518,6 +522,51 @@ void TrieNode<character_t>::save_subtrie( std::vector<character_t> current_word,
 	character_t_parent alphabet_size =  std::numeric_limits<character_t>::max() + 1;
 	while (current_letter != alphabet_size)
 		this->children[next_child++]->save_subtrie( current_word, std::vector<character_t>( 1, (character_t) current_letter++), file);
+}
+
+template <class character_t>
+bool TrieNode<character_t>::get_prefix_words( character_t** toReturn, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count)
+{
+	// append letter of path to current word
+	current_word.insert(current_word.end(), letter_to_append.begin(), letter_to_append.end());
+
+	// write current word in return list, if there exists one
+	if ( this->translation != NULL)
+	{
+		current_word.push_back( ::trie::end_of_string );
+		toReturn[count] = new character_t[current_word.size()];
+		strcpy( toReturn[count], &current_word[0]);
+		current_word.pop_back();
+
+		if (count == 0)
+			return true;
+		else
+			count--;
+	}
+
+	// read zeros map
+	// for every active letter that you find, call recursive get_prefix_words function, until count reaches 0
+	// we also need the value of the letter, so we can't just get the children_count (like in the destructor)
+	character_t next_child = 0;
+	character_t_parent current_letter = 0;
+	character_t_parent current_zeros_map_position = 0;
+	while(current_zeros_map_position != this->zeros_map_half_size*2)
+	{
+		while (zeros_map[current_zeros_map_position] != current_letter)
+			if( this->children[next_child++]->get_prefix_words( toReturn, current_word, std::vector<character_t>( 1, current_letter++), count) )
+				return true;
+
+		current_letter = zeros_map[current_zeros_map_position+1] + 1;
+		current_zeros_map_position += 2;
+	}
+
+	// letters after last zeros_group (if there exist any)
+	character_t_parent alphabet_size =  std::numeric_limits<character_t>::max() + 1;
+	while (current_letter != alphabet_size)
+		if ( this->children[next_child++]->get_prefix_words( toReturn, current_word, std::vector<character_t>( 1, (character_t) current_letter++), count) )
+			return true;
+
+	return false;
 }
 
 }

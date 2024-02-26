@@ -24,12 +24,12 @@ Future plans:
 2) Use a similar data-structure for the translation strings
 3) More effective load-save operations on disk
 4) switch between RLE and normal bitmapping when it is most optimal
-5) add word prefix functionality
-6) python bindings
-7) add real alphabet - integer mapping example outside of the library
-8) copy constructors
-9) tests
-10) iterative destructor, saver
-11) allow custom setting for word_size, translation_size, entry_count max. values and end_of_string for each trie
-12) give dictionary name after trie creation
-13) memory reallocations in batches, not 1-by-1
+5) python bindings
+6) add real alphabet - integer mapping example outside of the library
+7) copy constructors
+8) tests
+9) iterative destructor, saver
+10) allow custom setting for word_size, translation_size, entry_count max. values and end_of_string for each trie
+11) give dictionary name after trie creation
+12) memory reallocations in batches, not 1-by-1
+13) random word generation
