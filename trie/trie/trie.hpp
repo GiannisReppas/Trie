@@ -240,7 +240,7 @@ bool Trie<character_t>::add_word( const character_t* word, const character_t* tr
 		++current_word_position;
 	}
 
-	// reached the end of the given word. Check if translation exists already and insert.
+	// reached the end of the given word. Check if translation already exists
 	if (previous->get_translation() != NULL)
 		return false;
 
@@ -284,7 +284,8 @@ bool Trie<character_t>::delete_word( const character_t* word)
 	previous->set_translation(NULL);
 
 	// loop through the delete path in reverse order
-	for (int i=(strlen(word)-1); i > -1; i--)
+	// we always refer to current node as (i-1) to have an end loop condition > 0 for uint8_t
+	for (uint8_t i=(strlen(word)); i > 0; i--)
 	{
 		/* if current node in the delete path
 			1) doesn't have children and translation (empty)
@@ -292,10 +293,10 @@ bool Trie<character_t>::delete_word( const character_t* word)
 		   ,then delete it and inform its parent about the deletion
 		   ,otherwise, end of deletion process */
 
-		if ( (delete_path[i]->is_empty()) && (delete_path[i] != this->head) )
+		if ( (delete_path[i-1]->is_empty()) && (delete_path[i-1] != this->head) )
 		{
 			delete delete_path[i];
-			delete_path[i-1]->set_child_null( word[i-1] );
+			delete_path[i-2]->set_child_null( word[i-2] );
 		}
 		else
 		{
