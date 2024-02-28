@@ -29,7 +29,7 @@ Future plans:
 7) copy constructors
 8) tests
 9) iterative destructor, saver
-10) allow custom setting for word_size, translation_size, entry_count max. values and end_of_string for each trie
+10) allow custom setting for word_size, translation_size, entry_count max. values for each trie
 11) give dictionary name after trie creation
 12) memory reallocations in batches, not 1-by-1
 13) random word generation

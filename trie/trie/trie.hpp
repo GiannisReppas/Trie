@@ -24,6 +24,10 @@ private:
 		typename std::conditional< sizeof(character_t) == 4, uint64_t,
 		void>::type >::type >::type;
 
+	/* number that should be counted as the end of a series of integers
+	normally, it is 0, like in strings */
+	uint32_t end_of_string = 0;
+
 	/* name of the Trie (and the file in disk) */
 	std::string dictionary_name;
 
@@ -34,8 +38,8 @@ private:
 	uint64_t entry_count;
 
 public:
-	Trie();
-	Trie( std::string dictionary_name);
+	Trie( uint32_t eos = 0);
+	Trie( std::string dictionary_name, uint32_t eos = 0);
 	~Trie();
 
 	/* return true if Trie has 0 translations saved */
@@ -71,7 +75,7 @@ public:
 };
 
 template <class character_t>
-Trie<character_t>::Trie()
+Trie<character_t>::Trie( uint32_t eos)
 {
 	// check if the type given is valid for the template class
 	uint8_t bytes;
@@ -84,16 +88,17 @@ Trie<character_t>::Trie()
 	else
 		throw ErrorCreatingTrieException();
 
-	// 0 entries, dictionary name empty
+	// 0 entries, dictionary name empty, set end_of_string
 	this->entry_count = 0;
 	this->dictionary_name = "";
+	this->end_of_string = eos;
 
 	// set up head node
 	this->head = new TrieNode<character_t>();
 }
 
 template <class character_t>
-Trie<character_t>::Trie( std::string dictionary_name)
+Trie<character_t>::Trie( std::string dictionary_name, uint32_t eos)
 {
 	// check if the type given is valid for the template class
 	uint8_t bytes;
@@ -106,9 +111,10 @@ Trie<character_t>::Trie( std::string dictionary_name)
 	else
 		throw ErrorCreatingTrieException();
 
-	// 0 entries, dictionary name
+	// 0 entries, dictionary name, set end_of_string
 	this->entry_count = 0;
 	this->dictionary_name = dictionary_name;
+	this->end_of_string = eos;
 
 	// open dictionary file to read it
 	uint8_t character_size;
@@ -157,13 +163,13 @@ Trie<character_t>::Trie( std::string dictionary_name)
 		fread( &word_size, sizeof(uint8_t), 1, file);
 		current_word = new character_t[word_size+1];
 		fread( current_word, sizeof(character_t), word_size, file);
-		current_word[word_size] = ::trie::end_of_string;
+		current_word[word_size] = this->end_of_string;
 
 		// read translation
 		fread( &translation_size, sizeof(uint16_t), 1, file);
 		current_translation = new character_t[translation_size+1];
 		fread( current_translation, sizeof(character_t), translation_size, file);
-		current_translation[translation_size] = ::trie::end_of_string;
+		current_translation[translation_size] = this->end_of_string;
 
 		// add tuple
 		this->add_word( current_word, current_translation);
@@ -208,7 +214,7 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 	current_word_position--;
 
 	// report an error if word given is not saved or it doesn't have a translation
-	if ( (strlen(word) != current_word_position) || (previous->get_translation() == NULL) )
+	if ( (strlen( word, this->end_of_string) != current_word_position) || (previous->get_translation() == NULL) )
 		return NULL;
 
 	return previous->get_translation();
@@ -218,8 +224,8 @@ template <class character_t>
 bool Trie<character_t>::add_word( const character_t* word, const character_t* translation)
 {
 	if ( this->entry_count == std::numeric_limits<uint64_t>::max() ||
-		 (strlen(word) == (std::numeric_limits<uint8_t>::max()-1)) ||
-		 (strlen(translation) == (std::numeric_limits<uint16_t>::max()-1)) )
+		 (strlen( word, this->end_of_string) == (std::numeric_limits<uint8_t>::max()-1)) ||
+		 (strlen( translation, this->end_of_string) == (std::numeric_limits<uint16_t>::max()-1)) )
 		return false;
 
 	// read existing Trie until you reach unsaved part of the word
@@ -236,7 +242,7 @@ bool Trie<character_t>::add_word( const character_t* word, const character_t* tr
 	current_word_position--;
 
 	// start inserting TrieNodes (letters)
-	while ( word[current_word_position] != ::trie::end_of_string )
+	while ( word[current_word_position] != this->end_of_string )
 	{
 		previous = previous->insert_letter( word[current_word_position] );
 		++current_word_position;
@@ -247,7 +253,7 @@ bool Trie<character_t>::add_word( const character_t* word, const character_t* tr
 		return false;
 
 	// add word with translation, increase entry_count
-	previous->set_translation(translation);
+	previous->set_translation( translation, this->end_of_string);
 	this->entry_count++;
 
 	return true;
@@ -258,8 +264,8 @@ bool Trie<character_t>::delete_word( const character_t* word)
 {
 	// keep track of all the visited nodes while traversing the trie in an array of pointers
 	// they could potentially be deleted in the end
-	TrieNode<character_t>** delete_path = new TrieNode<character_t>*[ strlen(word)+1 ];
-	for (uint8_t i=0; i < strlen(word); i++)
+	TrieNode<character_t>** delete_path = new TrieNode<character_t>*[ strlen( word, this->end_of_string)+1 ];
+	for (uint8_t i=0; i < strlen( word, this->end_of_string); i++)
 		delete_path[i] = NULL;
 
 	// read existing Trie and update the delete path until you reach unsaved part of the word
@@ -279,15 +285,15 @@ bool Trie<character_t>::delete_word( const character_t* word)
 	current_word_position--;
 
 	// report an error if word given is not saved or it doesn't have a translation
-	if ( (strlen(word) != current_word_position) || previous->get_translation() == NULL)
+	if ( (strlen( word, this->end_of_string) != current_word_position) || previous->get_translation() == NULL)
 		return false;
 
 	// at this point, you will surely have a successful deletion, delete translation
-	previous->set_translation(NULL);
+	previous->set_translation(NULL, this->end_of_string);
 
 	// loop through the delete path in reverse order
 	// we always refer to current node as (i-1) to have an end loop condition > 0 for uint8_t
-	for (uint8_t i=(strlen(word)); i > 0; i--)
+	for (uint8_t i=(strlen( word, this->end_of_string)); i > 0; i--)
 	{
 		/* if current node in the delete path
 			1) doesn't have children and translation (empty)
@@ -352,7 +358,7 @@ character_t** Trie<character_t>::get_prefix_words( const character_t* word, uint
 		current_word.pop_back();
 
 	n--;
-	previous->get_prefix_words( toReturn, current_word, std::vector<character_t>(), n);
+	previous->get_prefix_words( toReturn, this->end_of_string, current_word, std::vector<character_t>(), n);
 
 	return toReturn;
 }

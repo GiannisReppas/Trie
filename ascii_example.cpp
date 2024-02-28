@@ -71,7 +71,7 @@ int main(void)
 				if ( arg2 != NULL )
 				{
 					printf("%s -> ", input1.c_str());
-					for (uint8_t i = 0; arg2[i] != ::trie::end_of_string; i++)
+					for (uint8_t i = 0; arg2[i] != '\0'; i++)
 						printf("%lc", arg2[i]);
 					printf("\n\n");
 				}
@@ -106,7 +106,7 @@ int main(void)
 				{
 					if (prefix_answers[i] != NULL)
 					{
-						for (uint8_t j = 0; prefix_answers[i][j] != ::trie::end_of_string; j++)
+						for (uint8_t j = 0; prefix_answers[i][j] != '\0'; j++)
 							printf("%lc", prefix_answers[i][j]);
 						printf(", ");
 						delete[] prefix_answers[i];
