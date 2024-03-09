@@ -28,7 +28,7 @@ Future plans:
 6) add real alphabet - integer mapping example outside of the library
 7) copy constructors
 8) tests
-9) iterative destructor, saver
+9) iterative destructor, saver, prefixer
 10) allow custom setting for word_size, translation_size, entry_count max. values for each trie
 11) give dictionary name after trie creation
 12) memory reallocations in batches, not 1-by-1

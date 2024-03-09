@@ -26,7 +26,7 @@ private:
 
 	/* number that should be counted as the end of a series of integers
 	normally, it is 0, like in strings */
-	uint32_t end_of_string = 0;
+	character_t end_of_string = 0;
 
 	/* name of the Trie (and the file in disk) */
 	std::string dictionary_name;
@@ -38,8 +38,8 @@ private:
 	uint64_t entry_count;
 
 public:
-	Trie( uint32_t eos = 0);
-	Trie( std::string dictionary_name, uint32_t eos = 0);
+	Trie( character_t eos = 0);
+	Trie( std::string dictionary_name, character_t eos = 0);
 	~Trie();
 
 	/* return true if Trie has 0 translations saved */
@@ -75,7 +75,7 @@ public:
 };
 
 template <class character_t>
-Trie<character_t>::Trie( uint32_t eos)
+Trie<character_t>::Trie( character_t eos)
 {
 	// check if the type given is valid for the template class
 	uint8_t bytes;
@@ -98,7 +98,7 @@ Trie<character_t>::Trie( uint32_t eos)
 }
 
 template <class character_t>
-Trie<character_t>::Trie( std::string dictionary_name, uint32_t eos)
+Trie<character_t>::Trie( std::string dictionary_name, character_t eos)
 {
 	// check if the type given is valid for the template class
 	uint8_t bytes;

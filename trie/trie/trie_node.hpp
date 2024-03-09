@@ -5,6 +5,7 @@
 #include <limits>
 #include <vector>
 
+#include "trie/trie.hpp"
 #include "trie/extended_character_functions.hpp"
 
 namespace trie
@@ -57,7 +58,7 @@ public:
 
 	/* manage TrieNode translation */
 	character_t* get_translation();
-	void set_translation(const character_t* translation, uint32_t end_of_string);
+	void set_translation(const character_t* translation, character_t end_of_string);
 
 	/* return a Trienode pointer following the path of the argument letter
 		return NULL if there doesn't exist one */
@@ -76,7 +77,7 @@ public:
 	void save_subtrie( std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
 
 	/* get words that are saved in the Trie and start with given prefix (TrieNode subtrie) */
-	bool get_prefix_words( character_t** toReturn, uint32_t end_of_string, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count);
+	bool get_prefix_words( character_t** toReturn, character_t end_of_string, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count);
 };
 
 template <class character_t> 
@@ -144,7 +145,7 @@ character_t* TrieNode<character_t>::get_translation()
 }
 
 template <class character_t>
-void TrieNode<character_t>::set_translation( const character_t* t, uint32_t end_of_string)
+void TrieNode<character_t>::set_translation( const character_t* t, character_t end_of_string)
 {
 	// delete old value
 	delete[] this->translation;
@@ -525,7 +526,7 @@ void TrieNode<character_t>::save_subtrie( std::vector<character_t> current_word,
 }
 
 template <class character_t>
-bool TrieNode<character_t>::get_prefix_words( character_t** toReturn, uint32_t end_of_string, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count)
+bool TrieNode<character_t>::get_prefix_words( character_t** toReturn, character_t end_of_string, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count)
 {
 	// append letter of path to current word
 	current_word.insert(current_word.end(), letter_to_append.begin(), letter_to_append.end());
