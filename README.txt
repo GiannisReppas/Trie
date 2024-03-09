@@ -7,7 +7,7 @@ Trie manages characters as unsigned integers, currently offering types of uint8_
 
 The data structure can optionally load and save entries from disk binary and csv files.
 
-A main function in ascii_example.cpp shows how to use a Trie of uint8_t characters to manage all ascii words, or an extension of them, considering 256 different bits.
+A main function in ascii_example.cpp shows how to use a Trie of uint8_t characters to manage all ascii words (or an extension of them, considering 256 different character).
 
 maximum number of entry count set to 2^64 - 1
 maximum word size set to 2^8 - 2
@@ -19,17 +19,23 @@ mkdir build && cd build
 cmake .. && make
 ./triectionary
 
-Future plans:
-1) allow more character sizes (diff. than 1/2/4 bytes)
-2) Use a similar data-structure for the translation strings
-3) More effective load-save operations on disk
+---------- Future Plans ----------
+
+UI related trie functions:
+1) random word generation
+2) More versatile load-save operations on disk (e.g. change dictionary file, name after creation)
+3) allow more character sizes (diff. than 1/2/4 bytes)
+4) provide real alphabet - integer mapping example outside of the library
+5) translation search (complicated, linked to core implementation)
+
+Core implementation:
+1) memory reallocations in batches, not 1-by-1
+2) copy constructors
+3) iterative destructor, saver, prefixer
 4) switch between RLE and normal bitmapping when it is most optimal
-5) python bindings
-6) add real alphabet - integer mapping example outside of the library
-7) copy constructors
-8) tests
-9) iterative destructor, saver, prefixer
-10) allow custom setting for word_size, translation_size, entry_count max. values for each trie
-11) give dictionary name after trie creation
-12) memory reallocations in batches, not 1-by-1
-13) random word generation
+5) allow custom setting for word_size, translation_size, entry_count max. values for each trie
+6) std::vector interoperability (e.g. insert vector directly)
+
+Other:
+1) python bindings
+2) tests

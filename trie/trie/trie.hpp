@@ -26,7 +26,7 @@ private:
 
 	/* number that should be counted as the end of a series of integers
 	normally, it is 0, like in strings */
-	character_t end_of_string = 0;
+	const character_t end_of_string = 0;
 
 	/* name of the Trie (and the file in disk) */
 	std::string dictionary_name;
@@ -75,7 +75,7 @@ public:
 };
 
 template <class character_t>
-Trie<character_t>::Trie( character_t eos)
+Trie<character_t>::Trie( character_t eos) : end_of_string(eos)
 {
 	// check if the type given is valid for the template class
 	uint8_t bytes;
@@ -91,14 +91,13 @@ Trie<character_t>::Trie( character_t eos)
 	// 0 entries, dictionary name empty, set end_of_string
 	this->entry_count = 0;
 	this->dictionary_name = "";
-	this->end_of_string = eos;
 
 	// set up head node
 	this->head = new TrieNode<character_t>();
 }
 
 template <class character_t>
-Trie<character_t>::Trie( std::string dictionary_name, character_t eos)
+Trie<character_t>::Trie( std::string dictionary_name, character_t eos) : end_of_string(eos)
 {
 	// check if the type given is valid for the template class
 	uint8_t bytes;
@@ -114,7 +113,6 @@ Trie<character_t>::Trie( std::string dictionary_name, character_t eos)
 	// 0 entries, dictionary name, set end_of_string
 	this->entry_count = 0;
 	this->dictionary_name = dictionary_name;
-	this->end_of_string = eos;
 
 	// open dictionary file to read it
 	uint8_t character_size;
