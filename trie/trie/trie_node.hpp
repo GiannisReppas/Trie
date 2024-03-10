@@ -1,9 +1,9 @@
 #ifndef TRIE_TRIE_NODE_H_
 #define TRIE_TRIE_NODE_H_
 
-#include <stdint.h>
-#include <limits>
 #include <vector>
+#include <limits>
+#include <stdint.h>
 
 #include "trie/trie.hpp"
 #include "trie/extended_character_functions.hpp"
@@ -77,7 +77,7 @@ public:
 	void save_subtrie( std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
 
 	/* get words that are saved in the Trie and start with given prefix (TrieNode subtrie) */
-	bool get_prefix_words( character_t** toReturn, character_t end_of_string, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count);
+	bool get_prefix_words( std::vector< std::vector<character_t> >& toReturn, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count);
 };
 
 template <class character_t> 
@@ -526,7 +526,10 @@ void TrieNode<character_t>::save_subtrie( std::vector<character_t> current_word,
 }
 
 template <class character_t>
-bool TrieNode<character_t>::get_prefix_words( character_t** toReturn, character_t end_of_string, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count)
+bool TrieNode<character_t>::get_prefix_words( std::vector< std::vector<character_t> >& toReturn,
+												std::vector<character_t> current_word,
+												std::vector<character_t> letter_to_append,
+												uint8_t& count)
 {
 	// append letter of path to current word
 	current_word.insert(current_word.end(), letter_to_append.begin(), letter_to_append.end());
@@ -534,10 +537,7 @@ bool TrieNode<character_t>::get_prefix_words( character_t** toReturn, character_
 	// write current word in return list, if there exists one
 	if ( this->translation != NULL)
 	{
-		current_word.push_back( end_of_string );
-		toReturn[count] = new character_t[current_word.size()];
-		strcpy( toReturn[count], &current_word[0], end_of_string);
-		current_word.pop_back();
+		toReturn.push_back( current_word );
 
 		if (count == 0)
 			return true;
@@ -554,7 +554,7 @@ bool TrieNode<character_t>::get_prefix_words( character_t** toReturn, character_
 	while(current_zeros_map_position != this->zeros_map_half_size*2)
 	{
 		while (zeros_map[current_zeros_map_position] != current_letter)
-			if( this->children[next_child++]->get_prefix_words( toReturn, end_of_string, current_word, std::vector<character_t>( 1, current_letter++), count) )
+			if( this->children[next_child++]->get_prefix_words( toReturn, current_word, std::vector<character_t>( 1, current_letter++), count) )
 				return true;
 
 		current_letter = zeros_map[current_zeros_map_position+1] + 1;
@@ -564,7 +564,7 @@ bool TrieNode<character_t>::get_prefix_words( character_t** toReturn, character_
 	// letters after last zeros_group (if there exist any)
 	character_t_parent alphabet_size =  std::numeric_limits<character_t>::max() + 1;
 	while (current_letter != alphabet_size)
-		if ( this->children[next_child++]->get_prefix_words( toReturn, end_of_string, current_word, std::vector<character_t>( 1, (character_t) current_letter++), count) )
+		if ( this->children[next_child++]->get_prefix_words( toReturn, current_word, std::vector<character_t>( 1, (character_t) current_letter++), count) )
 			return true;
 
 	return false;

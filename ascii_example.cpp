@@ -17,7 +17,7 @@ int main(void)
 	std::string input, input1, input2;
 	bool correct_input;
 	uint8_t *arg1, *arg2;
-	uint8_t **prefix_answers;
+	std::vector< std::vector<uint8_t> > prefix_answers;
 	do
 	{
 		printf("Main menu:\n");
@@ -35,6 +35,7 @@ int main(void)
 		input.clear();
 		input1.clear();
 		input2.clear();
+		prefix_answers.clear();
 		arg1 = NULL;
 		arg2 = NULL;
 		std::getline(std::cin, input);
@@ -102,18 +103,14 @@ int main(void)
 				prefix_answers = t->get_prefix_words( arg1, stoi(input2) );
 
 				printf("prefixes: ");
-				for (uint8_t i = 0; i < stoi(input2); i++)
+				for (uint8_t i = 0; i < prefix_answers.size(); i++)
 				{
-					if (prefix_answers[i] != NULL)
-					{
 						for (uint8_t j = 0; prefix_answers[i][j] != '\0'; j++)
 							printf("%lc", prefix_answers[i][j]);
-						printf(", ");
-						delete[] prefix_answers[i];
-					}
+						if (i != (prefix_answers.size()-1))
+							printf(", ");
 				}
 				printf("\n\n");
-				delete[] prefix_answers;
 
 				delete[] arg1;
 			}

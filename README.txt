@@ -27,6 +27,7 @@ UI related trie functions:
 3) allow more character sizes (diff. than 1/2/4 bytes)
 4) provide real alphabet - integer mapping example outside of the library
 5) translation search (complicated, linked to core implementation)
+6) modify translation
 
 Core implementation:
 1) memory reallocations in batches, not 1-by-1
