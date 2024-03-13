@@ -27,7 +27,8 @@ UI related trie functions:
 3) allow more character sizes (diff. than 1/2/4 bytes)
 4) provide real alphabet - integer mapping example outside of the library
 5) translation search (complicated, linked to core implementation)
-6) modify translation
+6) modify translation (instead of deleting and inserting)
+7) print all entries (maybe in user-defined batches)
 
 Core implementation:
 1) memory reallocations in batches, not 1-by-1
@@ -35,7 +36,6 @@ Core implementation:
 3) iterative destructor, saver, prefixer
 4) switch between RLE and normal bitmapping when it is most optimal
 5) allow custom setting for word_size, translation_size, entry_count max. values for each trie
-6) std::vector interoperability (e.g. insert vector directly)
 
 Other:
 1) python bindings

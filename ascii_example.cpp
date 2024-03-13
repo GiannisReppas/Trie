@@ -16,7 +16,7 @@ int main(void)
 	// read input from command line
 	std::string input, input1, input2;
 	bool correct_input;
-	uint8_t *arg1, *arg2;
+	std::vector<uint8_t> arg1,arg2;
 	std::vector< std::vector<uint8_t> > prefix_answers;
 	do
 	{
@@ -35,9 +35,11 @@ int main(void)
 		input.clear();
 		input1.clear();
 		input2.clear();
+		arg1.clear();
+		arg2.clear();
 		prefix_answers.clear();
-		arg1 = NULL;
-		arg2 = NULL;
+
+		// read next command
 		std::getline(std::cin, input);
 
 		// split input into basic parts
@@ -50,55 +52,48 @@ int main(void)
 			{
 				printf("inserting: (word -> %s) and (translation -> %s)\n", input1.c_str(), input2.c_str() );
 
-				arg1 = trie::str_to_c<uint8_t>( input1 );
-				arg2 = trie::str_to_c<uint8_t>( input2 );
+				arg1.insert( arg1.end(), input1.begin(), input1.begin() + (input1.size() + 1) );
+				arg2.insert( arg2.end(), input2.begin(), input2.begin() + (input2.size() + 1) );
 
 				if ( t->add_word( arg1, arg2 ) )
 					printf("Added word %s with translation %s successfully in Trie\n\n", input1.c_str(), input2.c_str() );
 				else
 					printf("Translation already exists for this word\n\n");
-
-				delete[] arg1;
-				delete[] arg2;
 			}
 			else if (!input.compare("\\s"))
 			{
 				printf("Searching: (word -> %s)\n", input1.c_str());
 
-				arg1 = trie::str_to_c<uint8_t>( input1 );
+				arg1.insert( arg1.end(), input1.begin(), input1.begin() + (input1.size() + 1) );
 
-				arg2 = t->search_word( arg1 );
+				arg1 = t->search_word( arg1 );
 
-				if ( arg2 != NULL )
+				if ( arg1.size() != 0 )
 				{
 					printf("%s -> ", input1.c_str());
-					for (uint8_t i = 0; arg2[i] != '\0'; i++)
-						printf("%lc", arg2[i]);
+					for (uint32_t i=0; i < arg1.size(); i++ )
+						printf("%c", arg1[i]);
 					printf("\n\n");
 				}
 				else
 					printf("%s doesn't exist in this dictionary\n\n", input1.c_str());
-
-				delete[] arg1;
 			}
 			else if (!input.compare("\\d"))
 			{
 				printf("deleting: (word -> %s)\n", input1.c_str());
 
-				arg1 = trie::str_to_c<uint8_t>( input1 );
+				arg1.insert( arg1.end(), input1.begin(), input1.begin() + (input1.size() + 1) );
 
-				if ( t->delete_word( arg1) )
+				if ( t->delete_word( arg1 ) )
 					printf("Deleted word %s successfully from Trie\n\n", input1.c_str());
 				else
 					printf("%s doesn't exist in this dictionary\n\n", input1.c_str());
-
-				delete[] arg1;
 			}
 			else if (!input.compare("\\p"))
 			{
 				printf("Searching prefixes for: (word -> %s)\n", input1.c_str());
 
-				arg1 = trie::str_to_c<uint8_t>( input1 );
+				arg1.insert( arg1.end(), input1.begin(), input1.begin() + (input1.size() + 1) );
 
 				prefix_answers = t->get_prefix_words( arg1, stoi(input2) );
 
@@ -111,8 +106,6 @@ int main(void)
 							printf(", ");
 				}
 				printf("\n\n");
-
-				delete[] arg1;
 			}
 			else if (!input.compare("\\c"))
 			{

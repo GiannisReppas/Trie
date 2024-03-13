@@ -41,25 +41,6 @@ character_t* strcpy(character_t* dst, const character_t* src, character_t end_of
 	return dst;
 }
 
-/* reads an std::string and writes its elements to a character_t*
-	be carefull, end_of_string is always '\0' for std::string */
-template <typename character_t>
-character_t* str_to_c(std::string toConvert)
-{
-	uint32_t toConvertSize = toConvert.size();
-
-	character_t* toReturn = new character_t[toConvertSize + 1];
-
-	for (uint32_t i = 0; i < toConvertSize; i++)
-	{
-		toReturn[i] = toConvert[i];
-	}
-
-	toReturn[toConvertSize] = '\0';
-
-	return toReturn;
-}
-
 }
 
 #endif

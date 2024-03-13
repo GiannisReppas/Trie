@@ -51,18 +51,22 @@ public:
 	/* search for the translation of a word in the Trie
 		return a pointer to the translation of the word
 		return NULL if the word given doesn't exist in the Trie */
-	character_t* search_word( const character_t* word);
+	std::vector<character_t> search_word( const character_t* word);
+	std::vector<character_t> search_word( const std::vector<character_t> word);
 
 	/* add a new word with its translation in the Trie
 		return false if the word given already exists in the Trie
 		or if the trie has the maximum number of translations (4294967295) */
 	bool add_word( const character_t* word, const character_t* translation);
+	bool add_word( const std::vector<character_t> word, const std::vector<character_t> translation);
 
 	/* delete a word from the Trie with its translation
 		return false if the word given doesn't exist in the Trie */
 	bool delete_word( const character_t* word);
+	bool delete_word( const std::vector<character_t> word);
 
-	const std::vector< std::vector<character_t> > get_prefix_words( const character_t* word, uint8_t n);
+	std::vector< std::vector<character_t> > get_prefix_words( const character_t* word, uint8_t n);
+	std::vector< std::vector<character_t> > get_prefix_words( const std::vector<character_t> word, uint8_t n);
 
 	/* write current information of trie in the binary dictionary file */
 	void save_changes();
@@ -195,7 +199,7 @@ bool Trie<character_t>::is_empty()
 }
 
 template <class character_t>
-character_t* Trie<character_t>::search_word( const character_t* word)
+std::vector<character_t> Trie<character_t>::search_word( const character_t* word)
 {
 	// read existing Trie until you reach unsaved part of the word
 	// for a successful search, we should not have an unsaved part
@@ -211,11 +215,21 @@ character_t* Trie<character_t>::search_word( const character_t* word)
 	}
 	current_word_position--;
 
+	std::vector<character_t> toReturn;
+
 	// report an error if word given is not saved or it doesn't have a translation
 	if ( (strlen( word, this->end_of_string) != current_word_position) || (previous->get_translation() == NULL) )
-		return NULL;
+		return toReturn;
 
-	return previous->get_translation();
+	toReturn.insert( toReturn.end(), previous->get_translation(), previous->get_translation() + (strlen(previous->get_translation(), this->end_of_string) + 1) );
+
+	return toReturn;
+}
+
+template <class character_t>
+std::vector<character_t> Trie<character_t>::search_word( const std::vector<character_t> word )
+{
+	return this->search_word( word.data() );
 }
 
 template <class character_t>
@@ -255,6 +269,12 @@ bool Trie<character_t>::add_word( const character_t* word, const character_t* tr
 	this->entry_count++;
 
 	return true;
+}
+
+template <class character_t>
+bool Trie<character_t>::add_word( const std::vector<character_t> word, const std::vector<character_t> translation)
+{
+	return this->add_word( word.data(), translation.data() );
 }
 
 template <class character_t>
@@ -320,13 +340,19 @@ bool Trie<character_t>::delete_word( const character_t* word)
 }
 
 template <class character_t>
+bool Trie<character_t>::delete_word( const std::vector<character_t> word)
+{
+	return this->delete_word( word.data() );
+}
+
+template <class character_t>
 uint64_t Trie<character_t>::get_entry_count()
 {
 	return this->entry_count;
 }
 
 template <class character_t>
-const std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_words( const character_t* word, uint8_t n)
+std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_words( const character_t* word, uint8_t n)
 {
 	// create a vector to return, this vector contains max. n words (which are also words)
 	std::vector< std::vector<character_t> > toReturn;
@@ -358,6 +384,12 @@ const std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_word
 		i.push_back( this->end_of_string );
 
 	return toReturn;
+}
+
+template <class character_t>
+std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_words( const std::vector<character_t> word, uint8_t n)
+{
+	return this->get_prefix_words( word.data(), n );
 }
 
 template <class character_t>
@@ -399,7 +431,7 @@ void Trie<character_t>::insert_from_csv( std::string filename)
 	// read file line-by-line
 	std::string word, translation;
 	std::string line;
-	character_t *arg1, *arg2;
+	std::vector<character_t> arg1, arg2;
 	while (std::getline(cvs_file, line))
 	{
 		auto comma_pos = line.find(",");
@@ -411,11 +443,11 @@ void Trie<character_t>::insert_from_csv( std::string filename)
 			translation = line.substr( comma_pos+1, line.size()-comma_pos);
 
 			// add tuple
-			arg1 = str_to_c<character_t>(word);
-			arg2 = str_to_c<character_t>(translation);
+			arg1.insert( arg1.end(), word.begin(), word.begin() + (word.size() + 1) );
+			arg2.insert( arg2.end(), translation.begin(), translation.begin() + (translation.size() + 1) );
 			this->add_word( arg1, arg2 );
-			delete[] arg1;
-			delete[] arg2;
+			arg1.clear();
+			arg2.clear();
 		}
 	}
 
@@ -438,7 +470,7 @@ void Trie<character_t>::delete_from_csv( std::string filename)
 	// read file line-by-line
 	std::string word, translation;
 	std::string line;
-	character_t *arg1;
+	std::vector<character_t> arg1;
 	while (std::getline(cvs_file, line))
 	{
 		auto comma_pos = line.find(",");
@@ -449,9 +481,9 @@ void Trie<character_t>::delete_from_csv( std::string filename)
 			word = line.substr( 0, comma_pos);
 
 			// delete tuple
-			arg1 = str_to_c<character_t>(word);
+			arg1.insert( arg1.end(), word.begin(), word.begin() + (word.size() + 1) );
 			this->delete_word( arg1 );
-			delete[] arg1;
+			arg1.clear();
 		}
 	}
 
