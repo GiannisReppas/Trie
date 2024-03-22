@@ -11,7 +11,7 @@ int main(void)
 {
 	// load file in memory
 	trie::Trie<uint8_t>* t;
-	t = new trie::Trie<uint8_t>("trie_ascii");
+	t = new trie::Trie<uint8_t>("./bin/trie_ascii");
 
 	// read input from command line
 	std::string input, input1, input2;

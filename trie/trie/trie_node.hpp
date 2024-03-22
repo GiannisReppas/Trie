@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "trie/trie.hpp"
-#include "trie/extended_character_functions.hpp"
+#include "trie/string.hpp"
 
 namespace trie
 {

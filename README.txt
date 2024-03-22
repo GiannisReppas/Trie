@@ -1,5 +1,7 @@
 A Trie Data Structure to manage words in-memory in the format of (word -> translation), effectively.
 
+Requirements: cmake 3.10 or higher
+
 Trie data structure offers super-fast insert, search and delete operations.
 Compression techniques like bit-mapping and RLE offer small memory footprint.
 
@@ -23,12 +25,10 @@ cmake .. && make
 
 UI related trie functions:
 1) random word generation
-2) More versatile load-save operations on disk (e.g. change dictionary file, name after creation)
-3) allow more character sizes (diff. than 1/2/4 bytes)
-4) provide real alphabet - integer mapping example outside of the library
-5) translation search (complicated, linked to core implementation)
-6) modify translation (instead of deleting and inserting)
-7) print all entries (maybe in user-defined batches)
+2) provide real alphabet - integer mapping example outside of the library
+3) translation search (complicated, linked to core implementation)
+4) modify translation (instead of deleting and inserting)
+5) print all entries (maybe in user-defined batches)
 
 Core implementation:
 1) memory reallocations in batches, not 1-by-1
@@ -36,6 +36,8 @@ Core implementation:
 3) iterative destructor, saver, prefixer
 4) switch between RLE and normal bitmapping when it is most optimal
 5) allow custom setting for word_size, translation_size, entry_count max. values for each trie
+6) More versatile and fast load-save operations on disk (e.g. change dictionary file, name after creation)
+7) allow more character sizes (diff. than 1/2/4 bytes)
 
 Other:
 1) python bindings
