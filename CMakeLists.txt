@@ -8,7 +8,7 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin )
 add_subdirectory( ./trie )
 include_directories(./trie/)
 
-option ( TRIECTIONARY_TEST "Build the Trie test suites."    ON )
+option ( TRIECTIONARY_TEST "Build the Triectionary test."    ON )
 option ( TRIE_BUILD_TESTS "Build the Trie test suites."     ON )
 
 if ( TRIECTIONARY_TEST )

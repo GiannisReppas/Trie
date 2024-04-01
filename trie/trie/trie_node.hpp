@@ -77,7 +77,7 @@ public:
 	void save_subtrie( std::vector<character_t> current_word, std::vector<character_t> letter_to_append, FILE* file);
 
 	/* get words that are saved in the Trie and start with given prefix (TrieNode subtrie) */
-	bool get_prefix_words( std::vector< std::vector<character_t> >& toReturn, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, uint8_t& count);
+	bool get_prefix_words( std::vector< std::vector<character_t> >& toReturn, std::vector<character_t> current_word, std::vector<character_t> letter_to_append, int64_t& count);
 };
 
 template <class character_t> 
@@ -529,7 +529,7 @@ template <class character_t>
 bool TrieNode<character_t>::get_prefix_words( std::vector< std::vector<character_t> >& toReturn,
 												std::vector<character_t> current_word,
 												std::vector<character_t> letter_to_append,
-												uint8_t& count)
+												int64_t& count)
 {
 	// append letter of path to current word
 	current_word.insert(current_word.end(), letter_to_append.begin(), letter_to_append.end());

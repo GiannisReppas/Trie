@@ -29,6 +29,7 @@ UI related trie functions:
 3) translation search (complicated, linked to core implementation)
 4) modify translation (instead of deleting and inserting)
 5) print all entries (maybe in user-defined batches)
+6) prefix option for all possible prefixes
 
 Core implementation:
 1) memory reallocations in batches, not 1-by-1

@@ -65,8 +65,13 @@ public:
 	bool delete_word( const character_t* word);
 	bool delete_word( const std::vector<character_t> word);
 
-	std::vector< std::vector<character_t> > get_prefix_words( const character_t* word, uint8_t n);
-	std::vector< std::vector<character_t> > get_prefix_words( const std::vector<character_t> word, uint8_t n);
+	/* modify a word and its translation */
+	// bool modify_word( const character_t* word, const character_t* translation);
+	// bool modify_word( const character_t* old_word, const character_t* new_word, const character_t* translation);
+
+	/* get a vector of words saved in the Trie that begin with the word given as argument  */
+	std::vector< std::vector<character_t> > get_prefix_words( const character_t* word, int64_t n);
+	std::vector< std::vector<character_t> > get_prefix_words( const std::vector<character_t> word, int64_t n);
 
 	/* write current information of trie in the binary dictionary file */
 	void save_changes();
@@ -352,7 +357,7 @@ uint64_t Trie<character_t>::get_entry_count()
 }
 
 template <class character_t>
-std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_words( const character_t* word, uint8_t n)
+std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_words( const character_t* word, int64_t n)
 {
 	// create a vector to return, this vector contains max. n words (which are also words)
 	std::vector< std::vector<character_t> > toReturn;
@@ -387,7 +392,7 @@ std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_words( con
 }
 
 template <class character_t>
-std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_words( const std::vector<character_t> word, uint8_t n)
+std::vector< std::vector<character_t> > Trie<character_t>::get_prefix_words( const std::vector<character_t> word, int64_t n)
 {
 	return this->get_prefix_words( word.data(), n );
 }

@@ -6,6 +6,7 @@
 
 namespace trie
 {
+
 /* compares two series, until the first end_of_string */
 template <typename character_t>
 int strcmp(const character_t* s1, const character_t* s2, character_t end_of_string = 0)

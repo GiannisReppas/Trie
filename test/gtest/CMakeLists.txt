@@ -68,12 +68,12 @@ if(NOT GTEST_FOUND)
 
 	configure_file(
 		./GTestDownload.cmake
-		${PROJECT_SOURCE_DIR}/../../build/googletest-download/CMakeLists.txt
+		${PROJECT_SOURCE_DIR}/gtest/googletest-download/CMakeLists.txt
 	)
 
 	execute_process( COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
 		RESULT_VARIABLE result
-		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../../build/googletest-download/
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/gtest/googletest-download/
 	)
 
 	if(result)
@@ -84,7 +84,7 @@ if(NOT GTEST_FOUND)
 
 	execute_process( COMMAND ${CMAKE_COMMAND} --build .
 		RESULT_VARIABLE result
-		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../../build/googletest-download/
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/gtest/googletest-download/
 	)
 
 	if(result)
@@ -100,7 +100,7 @@ if(NOT GTEST_FOUND)
 	# We only want test, not mock.
 	set(BUILD_GTEST ON  CACHE BOOL "Builds the googletest subproject")
 	set(BUILD_GMOCK OFF CACHE BOOL "Builds the googlemock subproject")
-	add_subdirectory( ${PROJECT_SOURCE_DIR}/../../build/googletest-src  ${PROJECT_SOURCE_DIR}/../../build/googletest-build )
+	add_subdirectory( ${PROJECT_SOURCE_DIR}/gtest/googletest-src  ${PROJECT_SOURCE_DIR}/gtest/googletest-build )
 
 	# The gtest/gtest_main targets carry header search path dependencies automatically when using
 	# CMake 2.8.11 or later. Otherwise we have to add them here ourselves.

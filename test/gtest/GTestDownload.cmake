@@ -9,8 +9,8 @@ include ( ExternalProject )
 # so that we know that it works for us.
 ExternalProject_Add ( googletest
     URL https://github.com/google/googletest/archive/release-1.8.0.zip
-    SOURCE_DIR        "${CMAKE_BINARY_DIR}/googletest-src"
-    BINARY_DIR        "${CMAKE_BINARY_DIR}/googletest-build"
+    SOURCE_DIR        "${PROJECT_SOURCE_DIR}/gtest/googletest-src"
+    BINARY_DIR        "${PROJECT_SOURCE_DIR}/gtest/googletest-build"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND     ""
     INSTALL_COMMAND   ""
