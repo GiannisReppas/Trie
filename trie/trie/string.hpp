@@ -15,18 +15,23 @@ int strcmp(const character_t* s1, const character_t* s2, character_t end_of_stri
 
 	while (s1[current_index] == s2[current_index])
 	{
-		if ( (s1 == end_of_string) || (s2 == end_of_string) )
+		if ( (s1[current_index] == end_of_string) || (s2[current_index] == end_of_string) )
 			break;
 
 		current_index++;
 	}
 
-	if (s1[current_index] == s2[current_index])
-		return 0;
-	else if (s1[current_index] > s2[current_index])
+	if (s1[current_index] > s2[current_index])
 		return 1;
 	else if (s1[current_index] < s2[current_index])
 		return -1;
+	else
+		return 0;
+}
+template <typename character_t>
+int strcmp(const std::vector<character_t> s1, const std::vector<character_t> s2, character_t end_of_string = 0)
+{
+	return strcmp( s1.data(), s2.data(), end_of_string );
 }
 
 /* reports number of elements in the array, until the first end_of_string */

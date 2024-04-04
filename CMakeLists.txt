@@ -9,7 +9,7 @@ add_subdirectory( ./trie )
 include_directories(./trie/)
 
 option ( TRIECTIONARY_TEST "Build the Triectionary test."    ON )
-option ( TRIE_BUILD_TESTS "Build the Trie test suites."     ON )
+option ( TRIE_BUILD_TESTS "Build the Trie test suites."      ON )
 
 if ( TRIECTIONARY_TEST )
     add_executable ( triectionary ./test/triectionary/triectionary.cpp )
